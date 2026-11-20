@@ -21,6 +21,9 @@ pub fn asset(page: &str, path: &str) -> Option<(&'static str, &'static [u8])> {
         ("chrome", "/chrome.js") => (JS, include_str!("../ui/chrome.js")),
         ("newtab", "/") => (HTML, include_str!("../ui/newtab.html")),
         ("settings", "/") => (HTML, include_str!("../ui/settings.html")),
+        ("devtools", "/") => (HTML, include_str!("../ui/devtools/devtools.html")),
+        ("devtools", "/devtools.css") => (CSS, include_str!("../ui/devtools/devtools.css")),
+        ("devtools", "/devtools.js") => (JS, include_str!("../ui/devtools/devtools.js")),
         _ => return None,
     };
     Some((found.0, found.1.as_bytes()))

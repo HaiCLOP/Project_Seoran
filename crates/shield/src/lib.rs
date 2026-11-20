@@ -83,7 +83,7 @@ pub enum ResourceKind {
 }
 
 impl ResourceKind {
-    fn as_filter_type(self) -> &'static str {
+    pub fn as_filter_type(self) -> &'static str {
         match self {
             ResourceKind::Document => "document",
             ResourceKind::Subdocument => "subdocument",
@@ -280,6 +280,23 @@ impl Shield {
         ))
     }
 
+    /// Which scriptlets run on the page, with how many rules call each.
+    pub fn scriptlet_calls(&self, page_url: &str) -> Vec<(&'static str, usize)> {
+        if !self.active_on(page_url) {
+            return Vec::new();
+        }
+        let script = self.engine.url_cosmetic_resources(page_url).injected_script;
+        SCRIPTLETS
+            .iter()
+            .filter_map(|(file, _, src)| {
+                let func = src.strip_prefix("function ")?.split('(').next()?.trim();
+                // The definition is one occurrence; every other one is a call.
+                let n = script.matches(&format!("{func}(")).count().saturating_sub(1);
+                (n > 0).then(|| (file.trim_end_matches(".js"), n))
+            })
+            .collect()
+    }
+
     /// Generic hide selectors for classes and ids found on the page.
     pub fn generic_hide_selectors(
         &self,
@@ -386,6 +403,17 @@ mod tests {
         // Other sites get no YouTube scriptlets.
         let other = s.document_start_script("https://example.com/").unwrap_or_default();
         assert!(!other.contains("seoranYtSkip("));
+    }
+
+    #[test]
+    fn scriptlet_report() {
+        let s = Shield::new();
+        let calls = s.scriptlet_calls("https://www.youtube.com/watch?v=abc");
+        let get = |n: &str| calls.iter().find(|c| c.0 == n).map(|c| c.1);
+        assert_eq!(get("set-constant"), Some(4));
+        assert_eq!(get("json-prune"), Some(1));
+        assert_eq!(get("seoran-yt-skip"), Some(1));
+        assert!(s.scriptlet_calls("https://example.com/").is_empty());
     }
 
     #[test]

@@ -10,7 +10,7 @@ mod store;
 
 use std::{
     cell::RefCell,
-    collections::VecDeque,
+    collections::{HashSet, VecDeque},
     rc::Rc,
     time::{Duration, Instant},
 };
@@ -47,7 +47,17 @@ pub enum UserEvent {
     History(u32),
     Favicon { tab: u32, url: String },
     Filters(filters::Compiled),
+    /// A browser command (from a key the engine caught, for example).
+    Action(String),
+    /// A message from the DevTools panel.
+    DevTools(String),
+    CdpResult { id: u64, ok: bool, json: String },
+    CdpEvent { tab: u32, name: String, json: String },
+    /// Right-click > Inspect at this point of the page.
+    Inspect { tab: u32, x: i32, y: i32 },
 }
+
+const DEVTOOLS_MIN: f64 = 140.0;
 
 struct Tab {
     id: u32,
@@ -61,6 +71,8 @@ struct Tab {
     can_forward: bool,
     last_active: Instant,
     key_times: VecDeque<Instant>,
+    /// DevTools Protocol events already forwarded from this tab's view.
+    cdp_subs: HashSet<String>,
 }
 
 impl Tab {
@@ -77,6 +89,7 @@ impl Tab {
             can_forward: false,
             last_active: Instant::now(),
             key_times: VecDeque::new(),
+            cdp_subs: HashSet::new(),
         }
     }
 
@@ -119,10 +132,24 @@ struct Browser {
     /// Extra areas (menus, popovers, toasts) the UI view currently shows
     /// over the page, in logical pixels: x, y, w, h, corner radius.
     panels: Vec<[f64; 5]>,
+    devtools: DevTools,
     dirty: bool,
     last_flush: Instant,
     chrome_ready: bool,
     last_maintenance: Instant,
+}
+
+/// The docked DevTools panel: its own view, attached to one tab at a time.
+#[derive(Default)]
+struct DevTools {
+    view: Option<WebView>,
+    open: bool,
+    ready: bool,
+    height: f64,
+    /// The tab the panel is inspecting.
+    tab: Option<u32>,
+    /// Calls to make once the panel page has loaded.
+    queued: Vec<(String, Value)>,
 }
 
 /// Window background for the current theme, so nothing ever flashes a
@@ -230,6 +257,7 @@ impl Browser {
             next_id: 1,
             closed: Vec::new(),
             panels: Vec::new(),
+            devtools: DevTools { height: 320.0, ..Default::default() },
             dirty: true,
             last_flush: Instant::now(),
             chrome_ready: false,
@@ -242,7 +270,9 @@ impl Browser {
         if browser.store.settings.restore_session && !session.tabs.is_empty() {
             for t in &session.tabs {
                 let id = browser.alloc_id();
-                browser.tabs.push(Tab::new(id, &t.url, &t.title));
+                // Internal pages from before the rename.
+                let url = t.url.replace(concat!("http://k", "ite."), nav::INTERNAL_PREFIX);
+                browser.tabs.push(Tab::new(id, &url, &t.title));
             }
             browser.active = session.active.min(browser.tabs.len() - 1);
         }
@@ -274,6 +304,9 @@ impl Browser {
         let bg = self.bg();
         self.window.set_background_color(Some(bg));
         let _ = self.chrome.set_background_color(bg);
+        if let Some(view) = &self.devtools.view {
+            let _ = view.set_background_color(bg);
+        }
         for wv in self.tabs.iter().filter_map(|t| t.webview.as_ref()) {
             let _ = wv.set_background_color(bg);
         }
@@ -305,11 +338,29 @@ impl Browser {
         self.window.inner_size().to_logical(self.window.scale_factor())
     }
 
+    /// Height the DevTools panel takes at the bottom of the window.
+    fn devtools_height(&self) -> f64 {
+        if !self.devtools.open {
+            return 0.0;
+        }
+        let room = self.logical_size().height - TOP - 80.0;
+        self.devtools.height.min(room).max(DEVTOOLS_MIN.min(room)).max(0.0)
+    }
+
     fn content_bounds(&self) -> Rect {
         let s = self.logical_size();
         Rect {
             position: LogicalPosition::new(0.0, TOP).into(),
-            size: LogicalSize::new(s.width, (s.height - TOP).max(1.0)).into(),
+            size: LogicalSize::new(s.width, (s.height - TOP - self.devtools_height()).max(1.0)).into(),
+        }
+    }
+
+    fn devtools_bounds(&self) -> Rect {
+        let s = self.logical_size();
+        let h = self.devtools_height();
+        Rect {
+            position: LogicalPosition::new(0.0, s.height - h).into(),
+            size: LogicalSize::new(s.width, h.max(1.0)).into(),
         }
     }
 
@@ -326,6 +377,9 @@ impl Browser {
         self.apply_region();
         if let Some(wv) = self.tabs.get(self.active).and_then(|t| t.webview.as_ref()) {
             let _ = wv.set_bounds(self.content_bounds());
+        }
+        if let Some(view) = &self.devtools.view {
+            let _ = view.set_bounds(self.devtools_bounds());
         }
     }
 
@@ -345,6 +399,8 @@ impl Browser {
             Ok(wv) => {
                 self.tabs[i].webview = Some(wv);
                 self.tabs[i].loading = true;
+                // A new view has none of the old one's event forwarders.
+                self.tabs[i].cdp_subs.clear();
                 // New views stack on top; keep the UI above the page.
                 engine::raise(&self.chrome);
             }
@@ -398,11 +454,17 @@ impl Browser {
         }
         self.refresh_nav(i);
         self.update_window_title();
+        if self.devtools.open {
+            self.devtools_attach();
+        }
         self.dirty = true;
     }
 
     fn close_tab(&mut self, id: u32) {
         let Some(i) = self.index_of(id) else { return };
+        if self.devtools.tab == Some(id) {
+            self.devtools.tab = None;
+        }
         let tab = self.tabs.remove(i);
         if nav::internal_page(&tab.url).is_none_or(|p| p != "newtab") {
             self.closed.push(SessionTab { url: tab.url.clone(), title: tab.title.clone() });
@@ -628,6 +690,15 @@ impl Browser {
             }
             "settings" => self.open_tab(&nav::internal_url("settings"), true),
             "devtools" => {
+                if self.devtools.open {
+                    self.close_devtools();
+                } else {
+                    self.open_devtools(None);
+                }
+            }
+            "devtoolsConsole" => self.open_devtools(Some(json!({ "view": "console" }))),
+            "devtoolsPick" => self.open_devtools(Some(json!({ "view": "elements", "pick": true }))),
+            "devtoolsAdvanced" => {
                 if let Some(wv) = self.active_tab().and_then(|t| t.webview.as_ref()) {
                     engine::open_devtools(wv);
                 }
@@ -980,7 +1051,231 @@ impl Browser {
                 self.shield.borrow_mut().load_compiled(&c.bytes, c.sources);
                 self.dirty = true;
             }
+            UserEvent::Action(a) => self.handle_action(&a),
+            UserEvent::DevTools(body) => self.handle_devtools(&body),
+            UserEvent::CdpResult { id, ok, json } => {
+                let data = if serde_json::from_str::<Value>(&json).is_ok() && !json.trim().is_empty() {
+                    json
+                } else {
+                    Value::String(json).to_string()
+                };
+                self.devtools_raw("result", &format!("{id},{ok},{data}"));
+            }
+            UserEvent::CdpEvent { tab, name, json } => {
+                if self.devtools.open && self.devtools.tab == Some(tab) && serde_json::from_str::<Value>(&json).is_ok() {
+                    self.devtools_raw("event", &format!("{},{json}", Value::String(name)));
+                }
+            }
+            UserEvent::Inspect { tab, x, y } => {
+                if let Some(i) = self.index_of(tab) {
+                    if i != self.active {
+                        self.activate(i);
+                    }
+                    self.open_devtools(Some(json!({ "view": "elements", "inspectAt": { "x": x, "y": y } })));
+                }
+            }
         }
+    }
+
+    // ---- DevTools panel ------------------------------------------------------
+
+    fn ensure_devtools_view(&mut self) {
+        if self.devtools.view.is_some() {
+            return;
+        }
+        let p = self.proxy.clone();
+        let (bounds, bg) = (self.devtools_bounds(), self.bg());
+        let view = WebViewBuilder::new_with_web_context(&mut self.ctx)
+            .with_url(nav::internal_url("devtools"))
+            .with_bounds(bounds)
+            .with_background_color(bg)
+            .with_hotkeys_zoom(false)
+            .with_custom_protocol("seoran".into(), |_id, req| engine::serve_internal(req))
+            .with_ipc_handler(move |req: Request<String>| {
+                if nav::internal_page(&req.uri().to_string()) == Some("devtools") {
+                    let _ = p.send_event(UserEvent::DevTools(req.into_body()));
+                }
+            })
+            .with_navigation_handler(|url| nav::internal_page(&url) == Some("devtools"))
+            .build_as_child(&self.window);
+        match view {
+            Ok(view) => {
+                engine::lock_down_ui(&view);
+                self.devtools.view = Some(view);
+                // Browser menus still draw above the panel.
+                engine::raise(&self.chrome);
+            }
+            Err(e) => eprintln!("[seoran] could not open DevTools: {e}"),
+        }
+    }
+
+    /// Open the panel; `show` optionally picks a view, element, etc.
+    fn open_devtools(&mut self, show: Option<Value>) {
+        self.ensure_devtools_view();
+        let Some(view) = &self.devtools.view else { return };
+        let _ = view.set_visible(true);
+        self.devtools.open = true;
+        self.layout();
+        self.devtools_attach();
+        if let Some(arg) = show {
+            self.devtools_call("show", arg);
+        }
+        self.dirty = true;
+    }
+
+    fn close_devtools(&mut self) {
+        self.devtools_detach();
+        self.devtools.open = false;
+        if let Some(view) = &self.devtools.view {
+            let _ = view.set_visible(false);
+        }
+        self.layout();
+        self.focus_content();
+        self.dirty = true;
+    }
+
+    /// Point the panel at the active tab.
+    fn devtools_attach(&mut self) {
+        let Some(tab) = self.active_tab() else { return };
+        let (id, url, title) = (tab.id, tab.url.clone(), tab.display_title());
+        if self.devtools.tab == Some(id) {
+            return;
+        }
+        self.devtools_detach();
+        self.devtools.tab = Some(id);
+        let theme = self.store.settings.theme.clone();
+        self.devtools_call("attach", json!({ "tabId": id, "url": url, "title": title, "theme": theme }));
+    }
+
+    /// Stop the old tab's instrumentation so it runs at full speed again.
+    fn devtools_detach(&mut self) {
+        let Some(old) = self.devtools.tab.take() else { return };
+        if let Some(wv) = self.index_of(old).and_then(|i| self.tabs[i].webview.as_ref()) {
+            for m in ["Overlay.hideHighlight", "Overlay.disable", "Network.disable", "CSS.disable", "DOM.disable", "Log.disable", "Runtime.disable"] {
+                engine::cdp_call(wv, m, "{}", |_, _| {});
+            }
+        }
+    }
+
+    fn devtools_call(&mut self, func: &str, arg: Value) {
+        if !self.devtools.ready {
+            self.devtools.queued.push((func.into(), arg));
+            return;
+        }
+        self.devtools_raw(func, &arg.to_string());
+    }
+
+    fn devtools_raw(&self, func: &str, args: &str) {
+        if let Some(view) = &self.devtools.view {
+            let _ = view.evaluate_script(&format!("window.sd && sd.{func}({args})"));
+        }
+    }
+
+    fn devtools_webview(&self) -> Option<&WebView> {
+        let id = self.devtools.tab?;
+        self.index_of(id).and_then(|i| self.tabs[i].webview.as_ref())
+    }
+
+    fn handle_devtools(&mut self, body: &str) {
+        let Ok(msg) = serde_json::from_str::<Value>(body) else { return };
+        match msg["t"].as_str().unwrap_or("") {
+            "ready" => {
+                self.devtools.ready = true;
+                // Re-send the attach so a reloaded panel starts clean.
+                let tab = self.devtools.tab.take();
+                if self.devtools.open {
+                    self.devtools_attach();
+                } else {
+                    self.devtools.tab = tab;
+                }
+                for (f, a) in std::mem::take(&mut self.devtools.queued) {
+                    self.devtools_raw(&f, &a.to_string());
+                }
+            }
+            "cdp" => {
+                let id = msg["id"].as_u64().unwrap_or(0);
+                let method = msg["method"].as_str().unwrap_or("").to_owned();
+                let params = if msg["params"].is_object() { msg["params"].to_string() } else { "{}".into() };
+                let p = self.proxy.clone();
+                match self.devtools_webview() {
+                    Some(wv) => engine::cdp_call(wv, &method, &params, move |ok, json| {
+                        let _ = p.send_event(UserEvent::CdpResult { id, ok, json });
+                    }),
+                    None => {
+                        let _ = p.send_event(UserEvent::CdpResult {
+                            id,
+                            ok: false,
+                            json: json!({ "message": "This tab is asleep. Switch to it to wake it up." }).to_string(),
+                        });
+                    }
+                }
+            }
+            "subscribe" => {
+                let Some(id) = self.devtools.tab else { return };
+                let Some(i) = self.index_of(id) else { return };
+                let events: Vec<String> = msg["events"]
+                    .as_array()
+                    .map(|a| a.iter().filter_map(|e| e.as_str().map(String::from)).collect())
+                    .unwrap_or_default();
+                let tab = &mut self.tabs[i];
+                let Some(wv) = tab.webview.as_ref() else { return };
+                for name in events {
+                    if !tab.cdp_subs.insert(name.clone()) {
+                        continue;
+                    }
+                    let p = self.proxy.clone();
+                    let n = name.clone();
+                    engine::cdp_subscribe(wv, &name, move |json| {
+                        let _ = p.send_event(UserEvent::CdpEvent { tab: id, name: n.clone(), json });
+                    });
+                }
+            }
+            "resize" => {
+                if let Some(h) = msg["h"].as_f64() {
+                    self.devtools.height = h.max(DEVTOOLS_MIN);
+                    self.layout();
+                }
+            }
+            "close" => self.close_devtools(),
+            "advanced" => self.handle_action("devtoolsAdvanced"),
+            "shield" => {
+                let report = self.shield_report();
+                self.devtools_call("shield", report);
+            }
+            "shieldSite" => {
+                let on = msg["on"].as_bool().unwrap_or(true);
+                let body = json!({ "t": "shieldSite", "on": on }).to_string();
+                self.proxy.send_event(UserEvent::Chrome(body)).ok();
+            }
+            _ => {}
+        }
+    }
+
+    /// What the shield did on the inspected page.
+    fn shield_report(&self) -> Value {
+        let Some(tab) = self.devtools.tab.and_then(|id| self.index_of(id)).map(|i| &self.tabs[i]) else {
+            return json!({});
+        };
+        let shield = self.shield.borrow();
+        let url = tab.hooks.page_url.borrow().clone();
+        let log: Vec<Value> = tab
+            .hooks
+            .blocked_log
+            .borrow()
+            .iter()
+            .map(|b| json!({ "url": b.url, "type": b.kind, "at": b.at_ms }))
+            .collect();
+        let site = shield::site_of(&url).filter(|_| !nav::is_internal(&url));
+        json!({
+            "url": url,
+            "site": site,
+            "enabled": shield.enabled(),
+            "active": site.is_some() && shield.active_on(&url),
+            "blocked": log,
+            "scriptlets": shield.scriptlet_calls(&url),
+            "cosmetic": shield.cosmetic_selectors(&url).len(),
+            "lists": shield.sources(),
+        })
     }
 
     /// Periodic housekeeping: persist data, put idle tabs to sleep.
@@ -994,6 +1289,9 @@ impl Browser {
         let mut slept = false;
         for (i, tab) in self.tabs.iter_mut().enumerate() {
             if i == self.active || tab.webview.is_none() || tab.last_active.elapsed() < limit {
+                continue;
+            }
+            if self.devtools.open && self.devtools.tab == Some(tab.id) {
                 continue;
             }
             if self.store.settings.sleep_tabs_after_min == 0 {

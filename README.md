@@ -33,6 +33,18 @@ tools/                dev tools: window capture, DevTools Protocol driver
 
 The browser UI is a small web page (`seoran://chrome`) that covers the whole window above each tab's page. A native window region clips it to the toolbar plus any open menu, so menus draw over the live page without hiding, resizing or repainting it. The UI renders state pushed from Rust and sends intents back over IPC.
 
+### Seoran DevTools
+
+`F12`, `Ctrl Shift I` or right-click → **Inspect** opens Seoran's own DevTools, docked at the bottom of the window. Drag its top edge to resize. It talks to the page over the Chrome DevTools Protocol:
+
+- **Elements:** live DOM tree, pick an element in the page (`Ctrl Shift C`), hover to highlight, styles, computed values and box model. `Delete` removes a node, `h` hides it, and `$0` in the console is the selected element.
+- **Console:** page logs, errors and exceptions; run JavaScript with history (↑/↓); expandable objects; level and text filters.
+- **Network:** every request with status, type, size, timing and a waterfall; headers and response bodies; a filter for requests the shield blocked.
+- **Storage:** cookies, local storage and session storage, with delete and clear.
+- **Shield:** what the shield did on this page: blocked requests, most-blocked domains, which scriptlets ran, and how many cosmetic rules applied.
+
+**Full DevTools** opens the engine's complete Chromium DevTools in a separate window for deep debugging. They carry Edge branding while the engine is WebView2.
+
 ### How YouTube ads are blocked
 
 YouTube serves ads from its own domain, so blocking by domain alone doesn't stop them. Like Brave and uBlock Origin, Seoran injects scriptlets before YouTube's own scripts run. They strip `playerAds`, `adPlacements` and `adSlots` from the player config, from `JSON.parse`, and from `fetch` and XHR responses. A fallback skips any ad that still plays. YouTube changes often, so the filter lists refresh daily. When something breaks, edit `crates/shield/lists/youtube.txt` and the scriptlets.
@@ -87,7 +99,9 @@ node tools/cdp.mjs seoran.chrome "S.shield"
 | Ctrl 1–9 | Go to tab |
 | Ctrl D | Bookmark |
 | Ctrl , | Settings |
-| F12 | Developer tools |
+| F12 / Ctrl Shift I | Seoran DevTools |
+| Ctrl Shift J | DevTools console |
+| Ctrl Shift C | Pick an element to inspect |
 
 ## Next steps (see the roadmap)
 

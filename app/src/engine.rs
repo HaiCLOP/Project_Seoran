@@ -6,18 +6,26 @@
 use std::{
     borrow::Cow,
     cell::{Cell, RefCell},
+    collections::VecDeque,
     rc::Rc,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use shield::{ResourceKind, Shield};
 use tao::{event_loop::EventLoopProxy, window::Window};
 use webview2_com::{
-    AddScriptToExecuteOnDocumentCreatedCompletedHandler, FaviconChangedEventHandler,
+    AcceleratorKeyPressedEventHandler, AddScriptToExecuteOnDocumentCreatedCompletedHandler,
+    CallDevToolsProtocolMethodCompletedHandler, ContextMenuRequestedEventHandler,
+    CustomItemSelectedEventHandler, DevToolsProtocolEventReceivedEventHandler, FaviconChangedEventHandler,
     HistoryChangedEventHandler, Microsoft::Web::WebView2::Win32::*, NavigationStartingEventHandler,
     SourceChangedEventHandler, WebResourceRequestedEventHandler, take_pwstr,
 };
 use windows::{
-    Win32::System::Com::IStream,
+    Win32::{
+        Foundation::POINT,
+        System::Com::IStream,
+        UI::Input::KeyboardAndMouse::{GetKeyState, VK_CONTROL, VK_SHIFT},
+    },
     core::{BOOL, HSTRING, Interface, PWSTR, w},
 };
 use wry::{
@@ -32,12 +40,27 @@ use crate::{UserEvent, nav, pages};
 /// and gives internal `seoran://` pages a small message API.
 const CONTENT_JS: &str = include_str!("../ui/content.js");
 
+/// One request the shield blocked, for the DevTools Shield panel.
+#[derive(Clone, Debug)]
+pub struct BlockedRequest {
+    pub url: String,
+    pub kind: &'static str,
+    pub at_ms: u64,
+}
+
+const BLOCKED_LOG_CAP: usize = 500;
+
 /// State shared between a tab and its engine callbacks.
 #[derive(Clone, Default)]
 pub struct TabHooks {
     pub blocked: Rc<Cell<u32>>,
+    pub blocked_log: Rc<RefCell<VecDeque<BlockedRequest>>>,
     pub page_url: Rc<RefCell<String>>,
     script_ids: Rc<RefCell<Vec<String>>>,
+}
+
+fn now_ms() -> u64 {
+    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0)
 }
 
 /// Serves `seoran://` pages from files compiled into the binary.
@@ -167,6 +190,7 @@ fn attach_hooks(
             let shield = shield.clone();
             let page_url = hooks.page_url.clone();
             let blocked = hooks.blocked.clone();
+            let log = hooks.blocked_log.clone();
             let proxy = proxy.clone();
             core.add_WebResourceRequested(
                 &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
@@ -195,6 +219,11 @@ fn attach_hooks(
                         )?;
                         args.SetResponse(&response)?;
                         blocked.set(blocked.get() + 1);
+                        let mut log = log.borrow_mut();
+                        if log.len() >= BLOCKED_LOG_CAP {
+                            log.pop_front();
+                        }
+                        log.push_back(BlockedRequest { url, kind: kind.as_filter_type(), at_ms: now_ms() });
                         let _ = proxy.send_event(UserEvent::Blocked(tab));
                     }
                     Ok(())
@@ -210,6 +239,7 @@ fn attach_hooks(
             let page_url = hooks.page_url.clone();
             let script_ids = hooks.script_ids.clone();
             let blocked = hooks.blocked.clone();
+            let log = hooks.blocked_log.clone();
             let proxy = proxy.clone();
             core.add_NavigationStarting(
                 &NavigationStartingEventHandler::create(Box::new(move |sender, args| {
@@ -222,6 +252,7 @@ fn attach_hooks(
                     *page_url.borrow_mut() = url.clone();
                     if !redirected.as_bool() {
                         blocked.set(0);
+                        log.borrow_mut().clear();
                     }
                     for id in script_ids.borrow_mut().drain(..) {
                         let _ = sender.RemoveScriptToExecuteOnDocumentCreated(&HSTRING::from(id));
@@ -288,7 +319,135 @@ fn attach_hooks(
             )?;
         }
     }
+    attach_devtools_hooks(webview, tab, proxy)?;
     Ok(())
+}
+
+/// F12 / Ctrl+Shift+I/J/C and right-click > Inspect open Seoran DevTools
+/// instead of the engine's own DevTools window.
+fn attach_devtools_hooks(webview: &WebView, tab: u32, proxy: &EventLoopProxy<UserEvent>) -> windows::core::Result<()> {
+    let mut token = 0i64;
+    unsafe {
+        // Keys are caught here, before the engine's own accelerators run,
+        // so a page can neither see nor block them.
+        let p = proxy.clone();
+        webview.controller().add_AcceleratorKeyPressed(
+            &AcceleratorKeyPressedEventHandler::create(Box::new(move |_, args| {
+                let Some(args) = args else { return Ok(()) };
+                let mut kind = COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN;
+                args.KeyEventKind(&mut kind)?;
+                if kind != COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN {
+                    return Ok(());
+                }
+                let mut vk = 0u32;
+                args.VirtualKey(&mut vk)?;
+                let ctrl = GetKeyState(VK_CONTROL.0 as i32) < 0;
+                let shift = GetKeyState(VK_SHIFT.0 as i32) < 0;
+                let action = match (vk, ctrl, shift) {
+                    (0x7B, false, false) | (0x49, true, true) => Some("devtools"), // F12, Ctrl+Shift+I
+                    (0x4A, true, true) => Some("devtoolsConsole"),                  // Ctrl+Shift+J
+                    (0x43, true, true) => Some("devtoolsPick"),                     // Ctrl+Shift+C
+                    _ => None,
+                };
+                if let Some(a) = action {
+                    args.SetHandled(true)?;
+                    let mut status = COREWEBVIEW2_PHYSICAL_KEY_STATUS::default();
+                    let _ = args.PhysicalKeyStatus(&mut status);
+                    if !status.WasKeyDown.as_bool() {
+                        let _ = p.send_event(UserEvent::Action(a.into()));
+                    }
+                }
+                Ok(())
+            })),
+            &mut token,
+        )?;
+
+        // Replace the engine's "Inspect" menu item with ours.
+        let core = webview.webview();
+        let (Ok(core11), Ok(env9)) =
+            (core.cast::<ICoreWebView2_11>(), webview.environment().cast::<ICoreWebView2Environment9>())
+        else {
+            return Ok(());
+        };
+        let p = proxy.clone();
+        core11.add_ContextMenuRequested(
+            &ContextMenuRequestedEventHandler::create(Box::new(move |_, args| {
+                let Some(args) = args else { return Ok(()) };
+                let items = args.MenuItems()?;
+                let mut count = 0u32;
+                items.Count(&mut count)?;
+                let mut at = count;
+                for i in (0..count).rev() {
+                    let item = items.GetValueAtIndex(i)?;
+                    let mut name = PWSTR::null();
+                    item.Name(&mut name)?;
+                    if take_pwstr(name) == "inspectElement" {
+                        items.RemoveValueAtIndex(i)?;
+                        at = i;
+                    }
+                }
+                let mut pt = POINT::default();
+                args.Location(&mut pt)?;
+                let ours = env9.CreateContextMenuItem(
+                    w!("Inspect"),
+                    None::<&IStream>,
+                    COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_COMMAND,
+                )?;
+                let p2 = p.clone();
+                let mut t = 0i64;
+                ours.add_CustomItemSelected(
+                    &CustomItemSelectedEventHandler::create(Box::new(move |_, _| {
+                        let _ = p2.send_event(UserEvent::Inspect { tab, x: pt.x, y: pt.y });
+                        Ok(())
+                    })),
+                    &mut t,
+                )?;
+                items.InsertValueAtIndex(at.min(count), &ours)?;
+                Ok(())
+            })),
+            &mut token,
+        )?;
+    }
+    Ok(())
+}
+
+/// Call a DevTools Protocol method on a page. `done(ok, json)` gets the
+/// result object, or the error, as JSON.
+pub fn cdp_call(webview: &WebView, method: &str, params: &str, done: impl FnOnce(bool, String) + 'static) {
+    let done = Rc::new(RefCell::new(Some(done)));
+    let d2 = done.clone();
+    let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, json| {
+        if let Some(f) = d2.borrow_mut().take() {
+            f(result.is_ok(), json);
+        }
+        Ok(())
+    }));
+    let started =
+        unsafe { webview.webview().CallDevToolsProtocolMethod(&HSTRING::from(method), &HSTRING::from(params), &handler) };
+    if let Err(e) = started {
+        if let Some(f) = done.borrow_mut().take() {
+            f(false, serde_json::json!({ "message": e.message() }).to_string());
+        }
+    }
+}
+
+/// Forward a DevTools Protocol event from a page to `on_event(json)`.
+pub fn cdp_subscribe(webview: &WebView, event: &str, on_event: impl Fn(String) + 'static) {
+    unsafe {
+        let Ok(receiver) = webview.webview().GetDevToolsProtocolEventReceiver(&HSTRING::from(event)) else { return };
+        let mut token = 0i64;
+        let _ = receiver.add_DevToolsProtocolEventReceived(
+            &DevToolsProtocolEventReceivedEventHandler::create(Box::new(move |_, args| {
+                if let Some(args) = args {
+                    let mut raw = PWSTR::null();
+                    args.ParameterObjectAsJson(&mut raw)?;
+                    on_event(take_pwstr(raw));
+                }
+                Ok(())
+            })),
+            &mut token,
+        );
+    }
 }
 
 /// Navigation state read straight from the engine.

@@ -29,6 +29,13 @@
     sun: '<circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
     download: '<path d="M12 4v11M7 10l5 5 5-5M5 19.5h14"/>',
     zz: '<path d="M8 9h5l-5 6h5M14 5h4l-4 4.5h4"/>',
+    cursor: '<path d="M5 4l13 6.5-5.6 1.6L10 18z"/><path d="M12.6 12.4l5 5"/>',
+    database: '<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+    trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>',
+    external: '<path d="M14 5h5v5M19 5l-8 8M18 14v5H5V6h5"/>',
+    terminal: '<path d="M5 7l5 5-5 5M12 17h7"/>',
+    activity: '<path d="M3.5 12h4l2.5-6 4 12 2.5-6h4"/>',
+    ban: '<circle cx="12" cy="12" r="7.5"/><path d="M6.7 6.7l10.6 10.6"/>',
   };
   window.icon = (name, size = 16) =>
     `<svg class="ic ic-${name}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p[name] || ''}</svg>`;

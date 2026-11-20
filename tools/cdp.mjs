@@ -39,6 +39,9 @@ export async function connect(match) {
 
 if (process.argv[1]?.endsWith('cdp.mjs') && process.argv.length > 3) {
   const c = await connect(process.argv[2]);
-  console.log(JSON.stringify(await c.evaluate(process.argv[3]), null, 2));
+  // "@path" reads the expression from a file (avoids shell quoting issues).
+  let expr = process.argv[3];
+  if (expr.startsWith('@')) expr = (await import('node:fs')).readFileSync(expr.slice(1), 'utf8');
+  console.log(JSON.stringify(await c.evaluate(expr), null, 2));
   c.close();
 }

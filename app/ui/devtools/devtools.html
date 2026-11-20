@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seoran DevTools</title>
+<link rel="stylesheet" href="/seoran.css">
+<link rel="stylesheet" href="/devtools.css">
+<script src="/icons.js"></script>
+</head>
+<body>
+  <div id="grip" title="Drag to resize"></div>
+  <header id="head">
+    <button id="pick" class="hbtn" title="Select an element in the page (Ctrl+Shift+C)" aria-label="Select an element"></button>
+    <nav id="views" role="tablist">
+      <button data-view="elements" role="tab">Elements</button>
+      <button data-view="console" role="tab">Console <span class="badge err" id="b-err" hidden></span><span class="badge warn" id="b-warn" hidden></span></button>
+      <button data-view="network" role="tab">Network</button>
+      <button data-view="storage" role="tab">Storage</button>
+      <button data-view="shield" role="tab">Shield <span class="badge" id="b-shield" hidden></span></button>
+    </nav>
+    <div class="grow" id="target" title=""></div>
+    <button id="advanced" class="hbtn text" title="Open the full Chromium DevTools in a window">Full DevTools</button>
+    <button id="close" class="hbtn" title="Close (F12)" aria-label="Close DevTools"></button>
+  </header>
+
+  <!-- Elements -->
+  <section class="view" id="v-elements" hidden>
+    <div class="split">
+      <div class="pane" id="dom-pane">
+        <div id="dom" role="tree" tabindex="0"></div>
+        <div id="crumbs"></div>
+      </div>
+      <div class="side" id="el-side">
+        <nav class="subtabs" id="el-tabs">
+          <button data-sub="styles" class="on">Styles</button>
+          <button data-sub="computed">Computed</button>
+          <button data-sub="box">Box</button>
+        </nav>
+        <div class="filter"><input id="style-filter" placeholder="Filter" spellcheck="false"></div>
+        <div class="side-body" id="el-body"><div class="empty">Select an element.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Console -->
+  <section class="view" id="v-console" hidden>
+    <div class="toolbar">
+      <button class="tbtn" id="con-clear" title="Clear console"></button>
+      <div class="seg" id="con-levels">
+        <button data-level="all" class="on">All</button>
+        <button data-level="error">Errors</button>
+        <button data-level="warning">Warnings</button>
+        <button data-level="info">Info</button>
+        <button data-level="debug">Verbose</button>
+      </div>
+      <input class="tinput" id="con-filter" placeholder="Filter" spellcheck="false">
+      <label class="check"><input type="checkbox" id="con-preserve"> Preserve log</label>
+    </div>
+    <div id="con-out" class="scroll"></div>
+    <div id="con-prompt">
+      <span class="caret">›</span>
+      <textarea id="con-in" rows="1" spellcheck="false" placeholder="Run JavaScript in the page" aria-label="Console input"></textarea>
+    </div>
+  </section>
+
+  <!-- Network -->
+  <section class="view" id="v-network" hidden>
+    <div class="toolbar">
+      <button class="tbtn" id="net-clear" title="Clear"></button>
+      <input class="tinput" id="net-filter" placeholder="Filter by URL" spellcheck="false">
+      <div class="seg" id="net-types">
+        <button data-type="all" class="on">All</button>
+        <button data-type="xhr">Fetch/XHR</button>
+        <button data-type="script">JS</button>
+        <button data-type="stylesheet">CSS</button>
+        <button data-type="image">Img</button>
+        <button data-type="media">Media</button>
+        <button data-type="font">Font</button>
+        <button data-type="document">Doc</button>
+        <button data-type="websocket">WS</button>
+        <button data-type="blocked">Blocked</button>
+      </div>
+      <label class="check"><input type="checkbox" id="net-preserve"> Preserve log</label>
+    </div>
+    <div class="split">
+      <div class="pane">
+        <div class="grid-head net-cols"><span>Name</span><span>Status</span><span>Type</span><span>Size</span><span>Time</span><span>Waterfall</span></div>
+        <div id="net-rows" class="scroll"></div>
+      </div>
+      <div class="side" id="net-side" hidden>
+        <nav class="subtabs" id="net-tabs">
+          <button data-sub="headers" class="on">Headers</button>
+          <button data-sub="response">Response</button>
+          <button class="x" id="net-close" aria-label="Close details"></button>
+        </nav>
+        <div class="side-body" id="net-body"></div>
+      </div>
+    </div>
+    <footer class="status" id="net-status"></footer>
+  </section>
+
+  <!-- Storage -->
+  <section class="view" id="v-storage" hidden>
+    <div class="split">
+      <nav class="list" id="st-kinds">
+        <button data-kind="cookies" class="on">Cookies</button>
+        <button data-kind="local">Local storage</button>
+        <button data-kind="session">Session storage</button>
+      </nav>
+      <div class="pane">
+        <div class="toolbar">
+          <button class="tbtn" id="st-refresh" title="Refresh"></button>
+          <input class="tinput" id="st-filter" placeholder="Filter" spellcheck="false">
+          <button class="tbtn text" id="st-clear">Clear all</button>
+        </div>
+        <div id="st-table" class="scroll"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shield -->
+  <section class="view" id="v-shield" hidden>
+    <div class="scroll" id="sh-body"></div>
+  </section>
+
+  <script src="/devtools.js"></script>
+</body>
+</html>
