@@ -4,14 +4,13 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--insert);
   font-size: 12px;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--line-2);
 }
 
 #grip {
@@ -39,15 +38,32 @@ code,
 }
 
 /* ---- header ---------------------------------------------------------------- */
+/* The header is a strip of the same plastic as the browser frame. */
 #head {
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 34px;
+  height: 36px;
   padding: 0 4px;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  background: var(--plastic) var(--mold);
+  color: var(--plastic-ink);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   flex: none;
+}
+
+#head .hbtn {
+  color: var(--plastic-ink);
+}
+
+#head .hbtn:hover {
+  background: var(--plastic-hover);
+  color: var(--plastic-ink);
+}
+
+#head .hbtn.on {
+  background: var(--insert);
+  color: var(--accent);
+  box-shadow: var(--recess);
 }
 
 .grow {
@@ -59,7 +75,7 @@ code,
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--ink-3);
+  color: var(--plastic-ink-2);
   text-align: right;
   padding: 0 8px;
 }
@@ -98,49 +114,60 @@ code,
   height: 100%;
 }
 
+#views {
+  align-items: center;
+  gap: 2px;
+}
+
 #views button {
   display: flex;
   align-items: center;
-  gap: 5px;
-  height: 100%;
-  padding: 0 10px;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-radius: 8px;
   background: transparent;
-  color: var(--ink-2);
+  color: var(--plastic-ink-2);
+  font-weight: 600;
 }
 
 #views button:hover {
-  color: var(--ink);
-  background: var(--hover);
+  color: var(--plastic-ink);
+  background: var(--plastic-hover);
 }
 
+/* The open view is a clear window cut into the plastic strip. */
 #views button.on {
   color: var(--ink);
-  border-bottom-color: var(--accent);
+  background: var(--insert);
+  box-shadow: var(--recess);
 }
 
+/* Counts are die-cut stickers. */
 .badge {
-  min-width: 16px;
-  height: 15px;
-  padding: 0 4px;
+  min-width: 17px;
+  height: 16px;
+  padding: 0 5px;
   border-radius: 8px;
-  font-size: 10px;
-  line-height: 15px;
+  font-family: var(--font-num);
+  font-size: 11px;
+  line-height: 16px;
   text-align: center;
-  font-weight: 650;
-  background: var(--press);
-  color: var(--ink-2);
+  font-weight: 600;
+  background: var(--insert-2);
+  color: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--keyline);
 }
 
 .badge.err {
-  background: #d93025;
+  background: var(--blocked);
   color: #fff;
 }
 
 .badge.warn {
-  background: #f2b600;
-  color: #201600;
+  background: #ffcf4a;
+  color: #2a1d00;
 }
 
 /* ---- shared layout ---------------------------------------------------------- */
@@ -255,7 +282,31 @@ code,
 
 .subtabs button.on {
   color: var(--ink);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--plastic);
+  font-weight: 600;
+}
+
+.seg button.on,
+.list button.on {
+  background: var(--plastic);
+  color: var(--plastic-ink);
+}
+
+.dn.sel {
+  background: color-mix(in srgb, var(--plastic) 18%, transparent);
+}
+
+.net-row.sel {
+  background: color-mix(in srgb, var(--plastic) 18%, transparent);
+}
+
+.bar .fill {
+  background: var(--plastic);
+}
+
+.card b {
+  font-family: var(--font-num);
+  font-weight: 600;
 }
 
 .subtabs .x {

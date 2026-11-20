@@ -12,9 +12,14 @@ const JS: &str = "text/javascript; charset=utf-8";
 const SVG: &str = "image/svg+xml";
 
 pub fn asset(page: &str, path: &str) -> Option<(&'static str, &'static [u8])> {
+    if path == "/fonts/unbounded.woff2" {
+        // Unbounded, SIL Open Font License 1.1 (ui/fonts/Unbounded-OFL.txt).
+        return Some(("font/woff2", include_bytes!("../ui/fonts/Unbounded.woff2")));
+    }
     let found: (&str, &str) = match (page, path) {
         (_, "/seoran.css") => (CSS, include_str!("../ui/seoran.css")),
         (_, "/icons.js") => (JS, include_str!("../ui/icons.js")),
+        (_, "/odometer.js") => (JS, include_str!("../ui/odometer.js")),
         (_, "/logo.svg") => (SVG, include_str!("../ui/logo.svg")),
         ("chrome", "/") => (HTML, include_str!("../ui/chrome.html")),
         ("chrome", "/chrome.css") => (CSS, include_str!("../ui/chrome.css")),

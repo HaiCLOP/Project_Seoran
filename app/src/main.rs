@@ -163,22 +163,44 @@ fn theme_bg(theme: &str, window: &Window) -> (u8, u8, u8, u8) {
     if dark { (20, 19, 23, 255) } else { (243, 240, 234, 255) }
 }
 
+/// The Seoran mark (grape square, white S, lime dot), drawn in code at
+/// 64x64 so the window icon needs no image file.
 fn app_icon() -> Option<Icon> {
-    // 32x32 rounded seoran-orange square with a white diamond, drawn in code.
-    let size = 32u32;
+    let size = 64u32;
+    let s = size as f32 / 32.0; // drawn on the logo's 32-unit grid
+    // Distance from p to the S: two half-circle arcs joined by straight bars.
+    let dist_s = |x: f32, y: f32| -> f32 {
+        let seg = |ax: f32, ay: f32, bx: f32, by: f32| {
+            let (dx, dy) = (bx - ax, by - ay);
+            let t = (((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)).clamp(0.0, 1.0);
+            (x - ax - t * dx).hypot(y - ay - t * dy)
+        };
+        let arc = |cx: f32, cy: f32, left: bool| {
+            let d = ((x - cx).hypot(y - cy) - 3.25).abs();
+            if (x <= cx) == left { d } else { f32::MAX }
+        };
+        seg(21.5, 9.5, 13.25, 9.5)
+            .min(arc(13.25, 12.75, true))
+            .min(seg(13.25, 16.0, 18.75, 16.0))
+            .min(arc(18.75, 19.25, false))
+            .min(seg(18.75, 22.5, 10.5, 22.5))
+    };
     let mut rgba = Vec::with_capacity((size * size * 4) as usize);
-    for y in 0..size {
-        for x in 0..size {
-            let (fx, fy) = (x as f32 - 15.5, y as f32 - 15.5);
-            let corner = (fx.abs() - 9.5).max(0.0).hypot((fy.abs() - 9.5).max(0.0));
-            let inside = corner <= 6.5;
-            let diamond = fx.abs() + fy.abs() <= 8.5;
-            let px = match (inside, diamond) {
-                (true, true) => [255, 255, 255, 255],
-                (true, false) => [232, 85, 45, 255],
-                _ => [0, 0, 0, 0],
+    for py in 0..size {
+        for px in 0..size {
+            let (x, y) = ((px as f32 + 0.5) / s, (py as f32 + 0.5) / s);
+            let (fx, fy) = (x - 16.0, y - 16.0);
+            let corner = (fx.abs() - 7.0).max(0.0).hypot((fy.abs() - 7.0).max(0.0));
+            let pixel = if corner > 9.0 {
+                [0, 0, 0, 0]
+            } else if (x - 24.5).hypot(y - 22.5) <= 2.4 {
+                [166, 226, 46, 255]
+            } else if dist_s(x, y) <= 1.8 {
+                [255, 255, 255, 255]
+            } else {
+                [109, 53, 217, 255]
             };
-            rgba.extend_from_slice(&px);
+            rgba.extend_from_slice(&pixel);
         }
     }
     Icon::from_rgba(rgba, size, size).ok()
@@ -588,6 +610,7 @@ impl Browser {
             "bookmarked": self.store.is_bookmarked(url),
             "maximized": self.window.is_maximized(),
             "theme": self.store.settings.theme,
+            "plastic": self.store.settings.plastic,
             "closedCount": self.closed.len(),
             "shield": {
                 "enabled": shield.enabled(),
@@ -832,6 +855,14 @@ impl Browser {
                     self.dirty = true;
                 }
             }
+            "plastic" => {
+                if let Some(p) = msg["value"].as_str().filter(|p| store::PLASTICS.contains(p)) {
+                    self.store.settings.plastic = p.into();
+                    self.store.save_settings();
+                    self.broadcast_look();
+                    self.dirty = true;
+                }
+            }
             "win" => match msg["a"].as_str().unwrap_or("") {
                 "min" => self.window.set_minimized(true),
                 "max" => {
@@ -904,6 +935,11 @@ impl Browser {
                             self.apply_theme();
                         }
                     }
+                    "plastic" => {
+                        if let Some(p) = v.as_str().filter(|p| store::PLASTICS.contains(p)) {
+                            s.plastic = p.into();
+                        }
+                    }
                     "restore_session" => s.restore_session = v.as_bool().unwrap_or(true),
                     "sleep_tabs_after_min" => s.sleep_tabs_after_min = v.as_u64().unwrap_or(20).min(240),
                     "shields_enabled" => {
@@ -913,6 +949,7 @@ impl Browser {
                     _ => {}
                 }
                 self.store.save_settings();
+                self.broadcast_look();
                 self.dirty = true;
                 let data = self.page_data(page);
                 self.page_reply(tab, json!({ "t": "data", "data": data }));
@@ -949,13 +986,31 @@ impl Browser {
         }
     }
 
+    /// Theme and plastic, for every seoran:// page.
+    fn look(&self) -> Value {
+        json!({ "theme": self.store.settings.theme, "plastic": self.store.settings.plastic })
+    }
+
+    /// Tell every open seoran:// page and the DevTools panel the new look.
+    fn broadcast_look(&self) {
+        let js = format!("window.__seoranLook && __seoranLook({})", self.look());
+        for t in &self.tabs {
+            if let (true, Some(wv)) = (nav::is_internal(&t.url), &t.webview) {
+                let _ = wv.evaluate_script(&js);
+            }
+        }
+        if let Some(view) = &self.devtools.view {
+            let _ = view.evaluate_script(&js);
+        }
+    }
+
     fn page_data(&self, page: &str) -> Value {
         let shield = self.shield.borrow();
         let s = &self.store.settings;
         let engine_name = store::SEARCH_ENGINES.iter().find(|e| e.0 == s.search_engine).map(|e| e.1).unwrap_or("");
         match page {
             "newtab" => json!({
-                "theme": s.theme,
+                "theme": s.theme, "plastic": s.plastic, "plastics": store::PLASTICS,
                 "engine": engine_name,
                 "blockedTotal": shield.blocked_total(),
                 "shieldOn": shield.enabled(),
@@ -966,7 +1021,7 @@ impl Browser {
                 })).collect::<Vec<_>>(),
             }),
             "settings" => json!({
-                "theme": s.theme,
+                "theme": s.theme, "plastic": s.plastic, "plastics": store::PLASTICS,
                 "settings": s,
                 "engines": store::SEARCH_ENGINES.iter().map(|e| json!({ "id": e.0, "name": e.1 })).collect::<Vec<_>>(),
                 "lists": shield.sources(),
@@ -977,7 +1032,7 @@ impl Browser {
                 "profile": self.store.dir().display().to_string(),
                 "version": env!("CARGO_PKG_VERSION"),
             }),
-            _ => json!({ "theme": s.theme }),
+            _ => self.look(),
         }
     }
 
@@ -1144,7 +1199,7 @@ impl Browser {
         self.devtools_detach();
         self.devtools.tab = Some(id);
         let theme = self.store.settings.theme.clone();
-        self.devtools_call("attach", json!({ "tabId": id, "url": url, "title": title, "theme": theme }));
+        self.devtools_call("attach", json!({ "tabId": id, "url": url, "title": title, "theme": theme, "plastic": self.store.settings.plastic }));
     }
 
     /// Stop the old tab's instrumentation so it runs at full speed again.

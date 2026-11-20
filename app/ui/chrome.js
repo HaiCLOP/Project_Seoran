@@ -44,7 +44,7 @@ const prettyUrl = (url) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 // This view covers the whole window but is clipped (a native window region)
 // to the toolbar plus the rectangles reported here. The page underneath
 // stays live; nothing is resized or hidden when a menu opens.
-const RADIUS = 10;
+const RADIUS = 12;
 function syncOverlay() {
   const rects = [];
   const add = (el, r = RADIUS) => {
@@ -53,7 +53,7 @@ function syncOverlay() {
   };
   const panel = open && { suggest: '#suggest', shield: '#shield-pop', menu: '#menu', palette: '#palette' }[open];
   if (panel) add($(panel));
-  for (const t of $('#toasts').children) add(t, 8);
+  for (const t of $('#toasts').children) add(t, 10);
   const key = JSON.stringify(rects);
   if (key === lastPanels) return;
   lastPanels = key;
@@ -153,17 +153,23 @@ function renderToolbar() {
   btn.classList.toggle('off', !sh.siteActive && !S.internal);
   const shieldIcon = sh.siteActive || S.internal ? 'shieldCheck' : 'shieldOff';
   put(btn.querySelector('.shield-ic'), shieldIcon, icon(shieldIcon, 15));
-  const countText = count > 999 ? '999+' : String(count);
-  if ($('#shield-count').textContent !== countText) $('#shield-count').textContent = countText;
+  odometer($('#shield-count'), count);
   btn.title = sh.siteActive ? `Seoran Shield: ${count} blocked on this page` : 'Seoran Shield is off for this site';
 
   document.body.classList.toggle('maximized', S.maximized);
   put($('[data-win="max"]'), S.maximized, S.maximized ? '&#xE923;' : '&#xE922;');
-  const theme = S.theme === 'system' ? null : S.theme;
-  if (theme) document.documentElement.dataset.theme = theme;
-  else delete document.documentElement.dataset.theme;
+  applyLook(S);
 
   if (open === 'shield') renderShield();
+  if (open === 'menu' && $('#menu')._look !== `${S.theme}|${S.plastic}`) renderMenu();
+}
+
+function applyLook({ theme, plastic }) {
+  const root = document.documentElement;
+  if (theme && theme !== 'system') root.dataset.theme = theme;
+  else delete root.dataset.theme;
+  if (plastic && plastic !== 'grape') root.dataset.plastic = plastic;
+  else delete root.dataset.plastic;
 }
 
 function render() {
@@ -206,7 +212,7 @@ function closePanels(sync = true) {
 // ---- shield popover ------------------------------------------------------------
 function renderShield() {
   const sh = S.shield;
-  $('#sp-blocked').textContent = (sh.siteActive ? sh.blocked : 0).toLocaleString();
+  odometer($('#sp-blocked'), sh.siteActive ? sh.blocked : 0);
   $('#sp-site').textContent = sh.site || (S.internal ? 'Seoran page' : 'No site');
   $('#sp-site-sub').textContent = !sh.site ? 'Nothing to block here'
     : sh.siteActive ? 'Ads and trackers are blocked' : 'Shield is down for this site';
@@ -215,7 +221,7 @@ function renderShield() {
   st.disabled = !sh.site || !sh.enabled;
   $('#sp-global').setAttribute('aria-checked', String(sh.enabled));
   $('#sp-total').textContent = `${sh.total.toLocaleString()} blocked in total`;
-  $('#sp-lists').innerHTML = sh.lists.map((l) => `<span>${esc(l)}</span>`).join('');
+  put($('#sp-lists'), sh.lists.join(','), sh.lists.map((l) => `<span class="sticker">${esc(l)}</span>`).join(''));
 }
 
 $('#shield').addEventListener('click', () => (open === 'shield' ? closePanels() : openPanel('shield')));
@@ -225,10 +231,24 @@ $('#sp-update').addEventListener('click', () => { send({ t: 'updateFilters' }); 
 
 // ---- menu ----------------------------------------------------------------------
 const themeLabel = { system: 'System', light: 'Light', dark: 'Dark' };
+const PLASTICS = [
+  ['grape', 'Grape', '#6d35d9'],
+  ['tangerine', 'Tangerine', '#ff7a1a'],
+  ['lime', 'Lime', '#a6e22e'],
+  ['bondi', 'Bondi', '#007f8c'],
+  ['strawberry', 'Strawberry', '#dc2259'],
+  ['graphite', 'Graphite', '#303038'],
+];
 function renderMenu() {
   const item = (a, ic, label, key = '', disabled = false) =>
-    `<button class="mi" role="menuitem" data-a="${a}" ${disabled ? 'disabled style="opacity:.4"' : ''}>${icon(ic)}<span>${label}</span>${key ? `<kbd>${key}</kbd>` : ''}</button>`;
+    `<button class="mi" role="menuitem" data-a="${a}" ${disabled ? 'disabled' : ''}>${icon(ic)}<span>${label}</span>${key ? `<kbd>${key}</kbd>` : ''}</button>`;
+  const current = S.plastic || 'grape';
+  $('#menu')._look = `${S.theme}|${S.plastic}`;
   $('#menu').innerHTML = [
+    `<div class="plastics"><div class="plastics-label">Plastic</div><div class="swatches" role="radiogroup" aria-label="Plastic colour">${
+      PLASTICS.map(([id, name, hex]) => `<button class="swatch" role="radio" aria-checked="${id === current}" data-plastic="${id}" title="${name}" aria-label="${name}" style="--sw:${hex}"></button>`).join('')
+    }</div></div>`,
+    '<div class="sep"></div>',
     item('newTab', 'plus', 'New tab', 'Ctrl T'),
     item('reopen', 'undo', 'Reopen closed tab', 'Ctrl ⇧ T', !S.closedCount),
     '<div class="sep"></div>',
@@ -242,6 +262,8 @@ function renderMenu() {
 }
 
 $('#menu').addEventListener('click', (e) => {
+  const sw = e.target.closest('.swatch');
+  if (sw) { send({ t: 'plastic', value: sw.dataset.plastic }); return; }
   const b = e.target.closest('.mi');
   if (!b || b.disabled) return;
   const a = b.dataset.a;
@@ -438,6 +460,7 @@ function commands() {
     { a: 'shieldGlobal', label: sh.enabled ? 'Turn shield off everywhere' : 'Turn shield on everywhere', ic: 'shield' },
     { a: 'updateFilters', label: 'Update shield filter lists', ic: 'download' },
     { a: 'theme', label: `Switch theme (now ${themeLabel[S.theme] || 'System'})`, ic: 'moon' },
+    ...PLASTICS.filter(([id]) => id !== (S.plastic || 'grape')).map(([id, name]) => ({ a: `plastic:${id}`, label: `Plastic: ${name}`, ic: 'sparkle' })),
     { a: 'settings', label: 'Open settings', ic: 'settings', key: 'Ctrl ,' },
     { a: 'devtools', label: 'Developer tools', ic: 'code', key: 'F12' },
   ].filter((c) => !c.off);
@@ -468,7 +491,8 @@ function renderPalette() {
   const tabs = rank(S.tabs.filter((t) => t.id !== S.active), (t) => `${t.title} ${t.url}`).slice(0, 6)
     .map((t) => ({ kind: 'tab', id: t.id, label: t.title, sub: prettyUrl(t.url), ic: 'tab' }));
   if (tabs.length) groups.push(['Open tabs', tabs]);
-  const cmds = rank(commands(), (c) => c.label).slice(0, q ? 5 : 11).map((c) => ({ kind: 'cmd', ...c }));
+  // With no query, list the core commands; the plastics show up when searched.
+  const cmds = rank(commands().filter((c) => q || !c.a.startsWith('plastic:')), (c) => c.label).slice(0, q ? 6 : 11).map((c) => ({ kind: 'cmd', ...c }));
   if (cmds.length) groups.push(['Commands', cmds]);
   if (q && pal.history.length) {
     groups.push(['History', pal.history.slice(0, 6).map((h) => ({ kind: 'url', label: h.title || h.url, sub: prettyUrl(h.url), url: h.url, ic: h.bookmark ? 'star' : 'history' }))]);
@@ -497,6 +521,7 @@ function runPalette(it) {
   else if (it.kind === 'tab') send({ t: 'activate', id: it.id });
   else if (it.kind === 'url') send({ t: 'navigate', input: it.url });
   else if (it.a === 'theme') cycleTheme();
+  else if (it.a.startsWith('plastic:')) send({ t: 'plastic', value: it.a.slice(8) });
   else if (it.a === 'shieldSite') send({ t: 'shieldSite', on: !S.shield.siteActive });
   else if (it.a === 'shieldGlobal') send({ t: 'shieldGlobal', on: !S.shield.enabled });
   else if (it.a === 'updateFilters') send({ t: 'updateFilters' });

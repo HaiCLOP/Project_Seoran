@@ -22,6 +22,8 @@ pub struct Settings {
     pub shields_enabled: bool,
     pub allowed_sites: Vec<String>,
     pub theme: String,
+    /// The shell's plastic colour: grape, tangerine, lime, bondi, strawberry, graphite.
+    pub plastic: String,
     pub restore_session: bool,
     pub sleep_tabs_after_min: u64,
     pub blocked_total: u64,
@@ -34,12 +36,15 @@ impl Default for Settings {
             shields_enabled: true,
             allowed_sites: Vec::new(),
             theme: "system".into(),
+            plastic: "grape".into(),
             restore_session: true,
             sleep_tabs_after_min: 20,
             blocked_total: 0,
         }
     }
 }
+
+pub const PLASTICS: &[&str] = &["grape", "tangerine", "lime", "bondi", "strawberry", "graphite"];
 
 pub const SEARCH_ENGINES: &[(&str, &str, &str)] = &[
     ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q="),

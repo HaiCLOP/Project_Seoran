@@ -56,8 +56,7 @@ window.sd = {
   async attach(info) {
     target = info;
     gen++;
-    if (info.theme && info.theme !== 'system') document.documentElement.dataset.theme = info.theme;
-    else delete document.documentElement.dataset.theme;
+    window.__seoranLook(info);
     waits.clear();
     $('#target').textContent = info.title || info.url;
     $('#target').title = info.url;
@@ -79,6 +78,12 @@ window.sd = {
     if (opts.inspectAt) elementsView.inspectAt(opts.inspectAt);
   },
   shield(report) { shieldView.render(report); },
+};
+
+window.__seoranLook = ({ theme, plastic }) => {
+  const r = document.documentElement;
+  if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
+  if (plastic && plastic !== 'grape') r.dataset.plastic = plastic; else delete r.dataset.plastic;
 };
 
 // ---- chrome of the panel -------------------------------------------------------
@@ -974,6 +979,7 @@ const shieldView = (() => {
     $('#b-shield').hidden = !blocked.length;
     $('#b-shield').textContent = blocked.length;
     if (!r.url) { body.innerHTML = '<div class="empty">Nothing inspected.</div>'; return; }
+    if (body.firstElementChild && body.firstElementChild.id !== 'sh-cards') body.innerHTML = '';
     const byDomain = new Map();
     for (const b of blocked) {
       let d = b.url;
@@ -983,14 +989,21 @@ const shieldView = (() => {
     const top = [...byDomain].sort((a, b) => b[1] - a[1]).slice(0, 10);
     const max = top.length ? top[0][1] : 1;
     const first = blocked.length ? blocked[0].at : 0;
-    body.innerHTML = `
-      <div class="cards">
-        <div class="card"><b>${blocked.length}</b><span>requests blocked on this page</span></div>
-        <div class="card"><b>${(r.scriptlets || []).reduce((n, s) => n + s[1], 0)}</b><span>scriptlet rules running</span></div>
-        <div class="card"><b>${r.cosmetic || 0}</b><span>cosmetic rules hiding elements</span></div>
-        <div class="card"><b style="color:${r.active ? 'var(--good)' : 'var(--ink-3)'}">${r.active ? 'On' : 'Off'}</b><span>${r.site ? esc(r.site) : 'Shield'}</span>
-          ${r.site && r.enabled ? `<div><button class="btn" id="sh-toggle">${r.active ? 'Turn off for this site' : 'Turn on for this site'}</button></div>` : ''}</div>
-      </div>
+    // The count cards persist between refreshes so their digits can roll.
+    if (!$('#sh-cards')) {
+      body.innerHTML = `<div class="cards" id="sh-cards">
+        <div class="card"><b id="sh-n1"></b><span>requests blocked on this page</span></div>
+        <div class="card"><b id="sh-n2"></b><span>scriptlet rules running</span></div>
+        <div class="card"><b id="sh-n3"></b><span>cosmetic rules hiding elements</span></div>
+        <div class="card" id="sh-state"></div>
+      </div><div id="sh-rest"></div>`;
+    }
+    odometer($('#sh-n1'), blocked.length);
+    odometer($('#sh-n2'), (r.scriptlets || []).reduce((n, s) => n + s[1], 0));
+    odometer($('#sh-n3'), r.cosmetic || 0);
+    $('#sh-state').innerHTML = `<b style="color:${r.active ? 'var(--on)' : 'var(--ink-3)'}">${r.active ? 'On' : 'Off'}</b><span>${r.site ? esc(r.site) : 'Shield'}</span>
+      ${r.site && r.enabled ? `<div><button class="btn" id="sh-toggle">${r.active ? 'Turn off for this site' : 'Turn on for this site'}</button></div>` : ''}`;
+    $('#sh-rest').innerHTML = `
       ${(r.scriptlets || []).length ? `<h3 class="sec">Scriptlets</h3><div class="chips">${r.scriptlets.map(([n, c]) => `<span>${esc(n)} ×${c}</span>`).join('')}</div>` : ''}
       ${top.length ? `<h3 class="sec">Most blocked</h3><div class="bars">${top.map(([d, n]) => `<div class="bar"><span class="dom" title="${esc(d)}">${esc(d)}</span><span class="track"><span class="fill" style="display:block;width:${(n / max) * 100}%"></span></span><span class="num">${n}</span></div>`).join('')}</div>` : ''}
       <h3 class="sec">Blocked requests</h3>

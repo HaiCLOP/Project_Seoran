@@ -1,85 +1,125 @@
-/* Seoran design tokens. Shared by the browser UI and every seoran:// page. */
-:root {
-  color-scheme: light;
-  --bg: #f3f0ea;
-  --bg-2: #ebe7df;
-  --surface: #ffffff;
-  --surface-2: #f7f5f1;
-  --hover: rgba(24, 23, 28, 0.06);
-  --press: rgba(24, 23, 28, 0.1);
-  --ink: #18171c;
-  --ink-2: #55525c;
-  --ink-3: #8b8792;
-  --line: rgba(24, 23, 28, 0.1);
-  --line-2: rgba(24, 23, 28, 0.16);
-  --accent: #e8552d;
-  --accent-2: #c9431e;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(232, 85, 45, 0.12);
-  --good: #1d9a68;
-  --good-soft: rgba(29, 154, 104, 0.12);
-  --warn: #b7791f;
-  --shadow-1: 0 1px 2px rgba(20, 18, 24, 0.08), 0 1px 6px rgba(20, 18, 24, 0.05);
-  --shadow-2: 0 18px 48px -12px rgba(20, 18, 24, 0.28), 0 4px 12px rgba(20, 18, 24, 0.08);
-  --ring: 0 0 0 3px rgba(232, 85, 45, 0.28);
-  --r-sm: 8px;
-  --r: 12px;
-  --r-lg: 18px;
-  --ease: cubic-bezier(0.2, 0, 0, 1);
-  --spring: var(--ease);
-  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-  --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+/* Seoran design tokens: Candy Plastic.
+   The shell is a piece of coloured gadget plastic the user picks. It keeps
+   its colour in light and dark mode (it is the gadget's colour); only the
+   clear-window inserts and the page ground follow the theme. */
+
+@font-face {
+  font-family: "Unbounded";
+  src: url("/fonts/unbounded.woff2") format("woff2");
+  font-weight: 200 900;
+  font-display: block;
 }
 
+:root {
+  color-scheme: light;
+
+  /* plastic (default: grape) */
+  --plastic: #6d35d9;
+  --plastic-ink: #ffffff;
+  --accent-l: #6d35d9;
+  --accent-d: #b892ff;
+
+  /* clear-window inserts and page ground, light */
+  --insert: #ffffff;
+  --insert-2: #f4f2f8;
+  --ink: #17151c;
+  --ink-2: #57525f;
+  --ink-3: #6f6a78;
+  --line: rgba(23, 21, 28, 0.1);
+  --line-2: rgba(23, 21, 28, 0.18);
+  --hover: rgba(23, 21, 28, 0.06);
+  --press: rgba(23, 21, 28, 0.11);
+  --on: #13803a;
+  --blocked: #d01f55;
+  --warn: #8f6400;
+  --accent: var(--accent-l);
+  --keyline: #ffffff;
+
+  /* derived plastic tones */
+  --plastic-ink-2: color-mix(in srgb, var(--plastic-ink) 74%, var(--plastic));
+  --plastic-hover: color-mix(in srgb, var(--plastic) 85%, var(--plastic-ink));
+  --plastic-press: color-mix(in srgb, var(--plastic) 74%, var(--plastic-ink));
+  --plastic-lo: color-mix(in srgb, var(--plastic) 78%, #000000);
+  --plastic-hi: color-mix(in srgb, var(--plastic) 70%, #ffffff);
+  --bg: color-mix(in srgb, var(--plastic) 6%, #f6f5f8);
+  --surface: var(--insert);
+  --surface-2: var(--insert-2);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --ring: 0 0 0 2px var(--insert), 0 0 0 4px var(--accent);
+
+  /* the molded look: a lit top edge and a darker lip */
+  --mold: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 34%, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.08));
+  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --lift: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 1px 2px rgba(0, 0, 0, 0.22);
+
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 14px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: var(--ease);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Unbounded", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --font-num: "Bahnschrift", "Segoe UI Variable Text", sans-serif;
+  --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+
+  /* kept for older pages */
+  --surface-3: var(--insert-2);
+  --good: var(--on);
+  --good-soft: color-mix(in srgb, var(--on) 14%, transparent);
+  --accent-ink: var(--plastic-ink);
+  --accent-2: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-2: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+}
+
+/* the plastics */
+:root[data-plastic="tangerine"] { --plastic: #ff7a1a; --plastic-ink: #2b1100; --accent-l: #b54800; --accent-d: #ff9d52; }
+:root[data-plastic="lime"] { --plastic: #a6e22e; --plastic-ink: #182400; --accent-l: #4b7600; --accent-d: #b9f04b; }
+:root[data-plastic="bondi"] { --plastic: #007f8c; --plastic-ink: #ffffff; --accent-l: #007481; --accent-d: #45d3e0; }
+:root[data-plastic="strawberry"] { --plastic: #dc2259; --plastic-ink: #ffffff; --accent-l: #c81c50; --accent-d: #ff7aa1; }
+:root[data-plastic="graphite"] { --plastic: #303038; --plastic-ink: #ffffff; --accent-l: #303038; --accent-d: #d8d8e2; }
+
+/* dark: smoked inserts, the plastic stays the plastic */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #141317;
-    --bg-2: #0f0e12;
-    --surface: #1e1d23;
-    --surface-2: #26252c;
+    --insert: #1a191f;
+    --insert-2: #222128;
+    --ink: #f3f1f6;
+    --ink-2: #bdb8c6;
+    --ink-3: #9a95a3;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-2: rgba(255, 255, 255, 0.16);
     --hover: rgba(255, 255, 255, 0.07);
-    --press: rgba(255, 255, 255, 0.11);
-    --ink: #f2efea;
-    --ink-2: #b6b2bc;
-    --ink-3: #7f7b87;
-    --line: rgba(255, 255, 255, 0.08);
-    --line-2: rgba(255, 255, 255, 0.14);
-    --accent: #ff6a3d;
-    --accent-2: #ff8a63;
-    --accent-ink: #1a0b05;
-    --accent-soft: rgba(255, 106, 61, 0.16);
-    --good: #3ecf8e;
-    --good-soft: rgba(62, 207, 142, 0.14);
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.35);
-    --ring: 0 0 0 3px rgba(255, 106, 61, 0.35);
+    --press: rgba(255, 255, 255, 0.12);
+    --on: #5fdc84;
+    --blocked: #ff6b94;
+    --warn: #ffd060;
+    --accent: var(--accent-d);
+    --keyline: #f3f1f6;
+    --bg: color-mix(in srgb, var(--plastic) 7%, #111015);
+    --recess: inset 0 1px 3px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #141317;
-  --bg-2: #0f0e12;
-  --surface: #1e1d23;
-  --surface-2: #26252c;
+  --insert: #1a191f;
+  --insert-2: #222128;
+  --ink: #f3f1f6;
+  --ink-2: #bdb8c6;
+  --ink-3: #9a95a3;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.16);
   --hover: rgba(255, 255, 255, 0.07);
-  --press: rgba(255, 255, 255, 0.11);
-  --ink: #f2efea;
-  --ink-2: #b6b2bc;
-  --ink-3: #7f7b87;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-2: rgba(255, 255, 255, 0.14);
-  --accent: #ff6a3d;
-  --accent-2: #ff8a63;
-  --accent-ink: #1a0b05;
-  --accent-soft: rgba(255, 106, 61, 0.16);
-  --good: #3ecf8e;
-  --good-soft: rgba(62, 207, 142, 0.14);
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.35);
-  --ring: 0 0 0 3px rgba(255, 106, 61, 0.35);
+  --press: rgba(255, 255, 255, 0.12);
+  --on: #5fdc84;
+  --blocked: #ff6b94;
+  --warn: #ffd060;
+  --accent: var(--accent-d);
+  --keyline: #f3f1f6;
+  --bg: color-mix(in srgb, var(--plastic) 7%, #111015);
+  --recess: inset 0 1px 3px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 *,
@@ -99,7 +139,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -108,17 +149,42 @@ button {
   cursor: default;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :focus-visible {
   outline: none;
   box-shadow: var(--ring);
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
-[hidden] {
-  display: none !important;
+input,
+textarea {
+  caret-color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: var(--line-2) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3) padding-box;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .sr-only {
@@ -129,17 +195,18 @@ button {
   clip: rect(0 0 0 0);
 }
 
-/* Switch, shared by the shield popover and settings. */
+/* A molded plastic switch: the track is plastic when on. */
 .switch {
   position: relative;
-  width: 38px;
-  height: 22px;
+  width: 40px;
+  height: 24px;
   flex: none;
   border-radius: 999px;
   border: 0;
   padding: 0;
-  background: var(--line-2);
-  transition: background 0.2s var(--ease);
+  background: var(--press);
+  box-shadow: var(--recess);
+  transition: background-color 0.18s var(--ease);
 }
 
 .switch::after {
@@ -147,32 +214,99 @@ button {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s var(--ease);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.18s var(--ease);
 }
 
 .switch[aria-checked="true"] {
-  background: var(--accent);
+  background: var(--plastic) var(--mold);
 }
 
 .switch[aria-checked="true"]::after {
   transform: translateX(16px);
 }
 
+.switch:disabled {
+  opacity: 0.4;
+}
+
+/* A die-cut sticker: solid fill, white keyline, a soft lift. */
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--plastic);
+  color: var(--plastic-ink);
+  font-weight: 650;
+  font-size: 11px;
+  box-shadow: 0 0 0 2px var(--keyline), 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* The odometer: digits in fixed cells; a changed digit rolls in. */
+.odo {
+  display: inline-flex;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.odo .cell {
+  position: relative;
+  display: inline-block;
+  width: 0.62em;
+  height: 1.1em;
+  overflow: hidden;
+  text-align: center;
+}
+
+.odo .cell > i {
+  position: absolute;
+  inset: 0;
+  font-style: normal;
+  line-height: 1.1em;
+}
+
+.odo .cell > i.in {
+  animation: odo-in 0.32s var(--ease) both;
+}
+
+.odo .cell > i.out {
+  animation: odo-out 0.32s var(--ease) both;
+}
+
+.odo .sep {
+  width: 0.3em;
+  text-align: center;
+}
+
+@keyframes odo-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes odo-out {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
 kbd {
   font-family: var(--font);
   font-size: 11px;
-  color: var(--ink-3);
-  border: 1px solid var(--line-2);
-  border-bottom-width: 2px;
-  border-radius: 5px;
+  color: var(--ink-2);
+  border-radius: 4px;
   padding: 0 5px;
-  line-height: 16px;
-  background: var(--surface);
+  line-height: 17px;
+  background: var(--insert-2);
+  box-shadow: inset 0 -1px 0 var(--line-2), 0 0 0 1px var(--line);
 }
 
 @media (prefers-reduced-motion: reduce) {

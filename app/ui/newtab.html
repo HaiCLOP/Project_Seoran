@@ -5,31 +5,47 @@
 <title>New tab</title>
 <link rel="stylesheet" href="/seoran.css">
 <script src="/icons.js"></script>
+<script src="/odometer.js"></script>
 <style>
   html, body { min-height: 100%; background: var(--bg); }
-  body { min-height: 100vh; overflow-x: hidden; }
+  body { min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; }
   main {
-    width: min(640px, calc(100vw - 48px));
+    flex: 1;
+    width: min(680px, calc(100vw - 48px));
     margin: 0 auto;
-    padding-top: clamp(64px, 22vh, 200px);
+    padding-top: clamp(56px, 18vh, 170px);
   }
-  .mark {
-    display: block;
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 24px;
+  .word {
+    margin: 0 0 22px;
+    font-family: var(--font-display);
+    font-size: clamp(34px, 5.2vw, 52px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .word b {
+    display: inline-block;
+    padding: 0.06em 0.22em 0.1em;
+    margin-left: 0.08em;
+    border-radius: 0.28em;
+    background: var(--plastic) var(--mold);
+    color: var(--plastic-ink);
+    font-weight: 800;
+    box-shadow: 0 0 0 3px var(--keyline), 0 2px 6px rgba(0, 0, 0, 0.2);
+    transform: rotate(-3deg);
   }
   form {
     display: flex;
     align-items: center;
-    gap: 10px;
-    height: 48px;
-    padding: 0 16px;
-    border-radius: 12px;
-    background: var(--surface);
-    border: 1px solid var(--line-2);
+    gap: 12px;
+    height: 56px;
+    padding: 0 8px 0 18px;
+    border-radius: 14px;
+    background: var(--insert);
+    box-shadow: var(--recess), 0 0 0 1px var(--line);
   }
-  form:focus-within { border-color: var(--accent); }
+  form:focus-within { box-shadow: var(--recess), 0 0 0 2px var(--accent); }
   form .ic { color: var(--ink-3); flex: none; }
   #q {
     flex: 1;
@@ -38,41 +54,59 @@
     border: 0;
     outline: 0;
     background: transparent;
-    font-size: 15px;
+    font-size: 16px;
   }
   #q::placeholder { color: var(--ink-3); }
+  .go {
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--plastic) var(--mold);
+    color: var(--plastic-ink);
+    font-weight: 700;
+    box-shadow: var(--lift);
+  }
+  .go:hover { background-color: var(--plastic-hover); }
+  .go:active { box-shadow: var(--recess); }
 
   .sites {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
-    margin-top: 32px;
+    gap: 6px;
+    margin-top: 34px;
   }
   .site {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 14px 8px 10px;
-    border-radius: 10px;
+    gap: 10px;
+    padding: 16px 8px 12px;
+    border-radius: 12px;
     color: var(--ink-2);
     text-decoration: none;
-    font-size: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
   }
   .site:hover { background: var(--hover); color: var(--ink); }
-  .mono {
-    width: 40px;
-    height: 40px;
+  .site:focus-visible { box-shadow: var(--ring); }
+  /* Each site is a die-cut sticker. */
+  .stk {
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 15px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    box-shadow: 0 0 0 3px var(--keyline), 0 2px 5px rgba(0, 0, 0, 0.22);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 0.2s var(--ease);
   }
+  .site:hover .stk { transform: rotate(0deg) translateY(-2px); }
   .site .name {
     max-width: 100%;
     overflow: hidden;
@@ -81,65 +115,96 @@
   }
   .site .forget {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
     display: grid;
     place-items: center;
     border: 0;
-    border-radius: 5px;
+    border-radius: 6px;
     background: transparent;
     color: var(--ink-3);
     visibility: hidden;
   }
-  .site:hover .forget { visibility: visible; }
+  .site:hover .forget, .site:focus-within .forget { visibility: visible; }
   .site .forget:hover { background: var(--press); color: var(--ink); }
+
   footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 20px;
-    text-align: center;
-    color: var(--ink-3);
-    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 28px;
   }
+  .cart {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: 12px;
+    background: var(--plastic) var(--mold);
+    color: var(--plastic-ink);
+    font-weight: 600;
+  }
+  .cart .win {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: var(--insert);
+    color: var(--ink);
+    box-shadow: var(--recess);
+    font-size: 18px;
+  }
+  .cart .win .ic { color: var(--on); }
   @media (max-width: 520px) { .sites { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
 <main>
-  <img class="mark" src="/logo.svg" alt="">
+  <h1 class="word">Hey, <b>Seoran</b></h1>
   <form id="search" autocomplete="off">
     <span id="sic"></span>
     <input id="q" type="text" spellcheck="false" autocomplete="off" placeholder="Search or type an address" aria-label="Search or type an address">
+    <button class="go" type="submit">Go</button>
   </form>
   <div id="sites"></div>
 </main>
-<footer id="stat"></footer>
+<footer id="foot" hidden>
+  <div class="cart"><span class="win"><span id="sdot"></span><span id="blocked"></span></span><span>ads and trackers blocked</span></div>
+</footer>
 <script>
   'use strict';
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  $('#sic').innerHTML = icon('search', 18);
+  const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+  $('#sic').innerHTML = icon('search', 20);
+  $('#sdot').innerHTML = icon('shieldCheck', 16);
+
+  window.__seoranLook = ({ theme, plastic }) => {
+    const r = document.documentElement;
+    if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
+    if (plastic && plastic !== 'grape') r.dataset.plastic = plastic; else delete r.dataset.plastic;
+  };
 
   function render(d) {
-    if (d.theme && d.theme !== 'system') document.documentElement.dataset.theme = d.theme;
-    else delete document.documentElement.dataset.theme;
+    __seoranLook(d);
     $('#q').placeholder = d.engine ? `Search with ${d.engine} or type an address` : 'Search or type an address';
     $('#sites').innerHTML = d.topSites.length ? `<div class="sites">${d.topSites.map((s) => {
       const site = s.site || s.url;
       const letter = (site.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
       const name = site.split('.').slice(-2, -1)[0] || site;
+      const h = hue(site);
+      const tilt = (h % 13) - 6;
       return `<a class="site" href="${esc(s.url)}" title="${esc(s.title || site)}">
-        <span class="mono">${esc(letter)}</span>
+        <span class="stk" style="background:hsl(${h} 62% 44%);--tilt:${tilt}deg">${esc(letter)}</span>
         <span class="name">${esc(name)}</span>
         <button class="forget" data-site="${esc(site)}" aria-label="Remove ${esc(site)}">${icon('x', 12)}</button>
       </a>`;
     }).join('')}</div>` : '';
-    $('#stat').textContent = d.shieldOn && d.blockedTotal
-      ? `${d.blockedTotal.toLocaleString()} ads and trackers blocked`
-      : '';
+    $('#foot').hidden = !(d.shieldOn && d.blockedTotal);
+    odometer($('#blocked'), d.blockedTotal || 0);
   }
 
   $('#sites').addEventListener('click', (e) => {
