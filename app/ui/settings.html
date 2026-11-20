@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<link rel="stylesheet" href="/seoran.css">
+<script src="/icons.js"></script>
+<style>
+  html, body { min-height: 100%; background: var(--bg); }
+  .wrap {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 680px);
+    gap: 40px;
+    justify-content: center;
+    padding: 48px 32px 80px;
+  }
+  nav {
+    position: sticky;
+    top: 48px;
+    align-self: start;
+  }
+  nav h1 {
+    margin: 0 0 20px;
+    font: 700 30px/1 var(--font-display);
+    letter-spacing: -0.03em;
+  }
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: background 0.12s, color 0.12s;
+  }
+  nav a:hover { background: var(--hover); color: var(--ink); }
+  nav a.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+  section {
+    margin-bottom: 28px;
+    scroll-margin-top: 32px;
+  }
+  section h2 {
+    margin: 0 0 10px 4px;
+    font: 650 13px var(--font);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 64px;
+    padding: 12px 18px;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .t { font-weight: 600; font-size: 14px; }
+  .row .d { color: var(--ink-3); margin-top: 2px; }
+  select {
+    height: 34px;
+    padding: 0 30px 0 12px;
+    border-radius: 9px;
+    border: 1px solid var(--line-2);
+    background: var(--surface-2);
+  }
+  .seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .seg button {
+    height: 28px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-2);
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+  .btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 9px;
+    border: 1px solid var(--line-2);
+    background: var(--surface);
+    font-weight: 600;
+    transition: background 0.12s, transform 0.12s var(--ease);
+  }
+  .btn:hover { background: var(--hover); }
+  .btn:active { transform: scale(0.97); }
+  .btn.danger { color: #d1342f; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 6px 0 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    font-size: 12px;
+  }
+  .chip button {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-3);
+  }
+  .chip button:hover { background: var(--press); color: var(--ink); }
+  .big {
+    font: 700 34px/1 var(--font-display);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    word-break: break-all;
+  }
+  .muted { color: var(--ink-3); }
+  @media (max-width: 760px) {
+    .wrap { grid-template-columns: 1fr; gap: 16px; padding: 24px 16px 60px; }
+    nav { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <h1>Settings</h1>
+    <a href="#general" class="on" data-ic="settings">General</a>
+    <a href="#shield" data-ic="shield">Shield</a>
+    <a href="#privacy" data-ic="lock">Privacy</a>
+    <a href="#about" data-ic="sparkle">About</a>
+  </nav>
+  <div id="content">
+    <section id="general">
+      <h2>General</h2>
+      <div class="card">
+        <div class="row">
+          <div><div class="t">Search engine</div><div class="d">Used by the address bar and new tab page.</div></div>
+          <select id="engine" aria-label="Search engine"></select>
+        </div>
+        <div class="row">
+          <div><div class="t">Appearance</div><div class="d">Follow Windows, or pick one.</div></div>
+          <div class="seg" id="theme" role="radiogroup" aria-label="Theme">
+            <button data-v="system" role="radio">System</button>
+            <button data-v="light" role="radio">Light</button>
+            <button data-v="dark" role="radio">Dark</button>
+          </div>
+        </div>
+        <div class="row">
+          <div><div class="t">Continue where you left off</div><div class="d">Reopen your tabs on start. Only the active tab loads right away.</div></div>
+          <button class="switch" id="restore" role="switch" aria-label="Continue where you left off"></button>
+        </div>
+        <div class="row">
+          <div><div class="t">Sleeping tabs</div><div class="d">Free memory from tabs you haven't looked at in a while. Tabs playing sound stay awake.</div></div>
+          <select id="sleep" aria-label="Sleep tabs after">
+            <option value="0">Never</option>
+            <option value="5">After 5 minutes</option>
+            <option value="20">After 20 minutes</option>
+            <option value="60">After 1 hour</option>
+            <option value="180">After 3 hours</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section id="shield">
+      <h2>Shield</h2>
+      <div class="card">
+        <div class="row">
+          <div><div class="big" id="total">0</div><div class="d">ads and trackers blocked so far</div></div>
+          <button class="switch" id="shields" role="switch" aria-label="Shield everywhere"></button>
+        </div>
+        <div class="row">
+          <div><div class="t">Filter lists</div><div class="d" id="lists-d">Updated daily in the background.</div><div class="chips" id="lists" style="margin-top:8px"></div></div>
+          <button class="btn" id="update">Update now</button>
+        </div>
+        <div class="row">
+          <div style="min-width:0"><div class="t">Sites with shield off</div><div class="d" id="allowed-d">Turn the shield off for a site from the shield button in the toolbar.</div><div class="chips" id="allowed" style="margin-top:8px"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacy">
+      <h2>Privacy</h2>
+      <div class="card">
+        <div class="row">
+          <div><div class="t">Browsing history</div><div class="d" id="hist-d">Stored only on this device.</div></div>
+          <button class="btn danger" id="clear">Clear history</button>
+        </div>
+        <div class="row">
+          <div><div class="t">Telemetry</div><div class="d">Seoran sends no usage data. The only network requests it makes on its own are filter-list updates.</div></div>
+          <span class="muted">None</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <h2>About</h2>
+      <div class="card">
+        <div class="row">
+          <div><div class="t">Seoran <span id="ver"></span></div><div class="d">Rust shell on the Chromium engine (WebView2). Open source.</div></div>
+          <img src="/logo.svg" width="36" height="36" alt="">
+        </div>
+        <div class="row">
+          <div style="min-width:0"><div class="t">Profile folder</div><code id="profile"></code></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const set = (key, value) => seoran.send({ t: 'setting', key, value });
+
+  for (const a of document.querySelectorAll('nav a')) a.insertAdjacentHTML('afterbegin', icon(a.dataset.ic));
+
+  function render(d) {
+    const s = d.settings;
+    if (s.theme !== 'system') document.documentElement.dataset.theme = s.theme;
+    else delete document.documentElement.dataset.theme;
+    $('#engine').innerHTML = d.engines.map((e) => `<option value="${esc(e.id)}" ${e.id === s.search_engine ? 'selected' : ''}>${esc(e.name)}</option>`).join('');
+    for (const b of document.querySelectorAll('#theme button')) {
+      b.classList.toggle('on', b.dataset.v === s.theme);
+      b.setAttribute('aria-checked', String(b.dataset.v === s.theme));
+    }
+    $('#restore').setAttribute('aria-checked', String(s.restore_session));
+    $('#sleep').value = String(s.sleep_tabs_after_min);
+    if (!$('#sleep').value) $('#sleep').value = '20';
+    $('#shields').setAttribute('aria-checked', String(s.shields_enabled));
+    $('#total').textContent = d.blockedTotal.toLocaleString();
+    $('#lists').innerHTML = d.lists.map((l) => `<span class="chip" style="padding-right:10px">${esc(l)}</span>`).join('');
+    $('#allowed').innerHTML = d.allowed.map((site) => `<span class="chip">${esc(site)}<button data-site="${esc(site)}" aria-label="Turn shield back on for ${esc(site)}">${icon('x', 11)}</button></span>`).join('');
+    $('#allowed-d').textContent = d.allowed.length ? 'Shield is off on these sites. Remove one to turn it back on.' : 'None. Turn the shield off for a site from the shield button in the toolbar.';
+    $('#hist-d').textContent = `${d.historyCount.toLocaleString()} pages and ${d.bookmarkCount} bookmarks, stored only on this device.`;
+    $('#ver').textContent = d.version;
+    $('#profile').textContent = d.profile;
+  }
+
+  $('#engine').addEventListener('change', (e) => set('search_engine', e.target.value));
+  $('#theme').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) set('theme', b.dataset.v); });
+  $('#restore').addEventListener('click', (e) => set('restore_session', e.currentTarget.getAttribute('aria-checked') !== 'true'));
+  $('#sleep').addEventListener('change', (e) => set('sleep_tabs_after_min', Number(e.target.value)));
+  $('#shields').addEventListener('click', (e) => set('shields_enabled', e.currentTarget.getAttribute('aria-checked') !== 'true'));
+  $('#update').addEventListener('click', () => seoran.send({ t: 'updateFilters' }));
+  $('#allowed').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) seoran.send({ t: 'allowSite', site: b.dataset.site, allow: false }); });
+  $('#clear').addEventListener('click', (e) => {
+    const b = e.currentTarget;
+    if (b.dataset.confirm) { seoran.send({ t: 'clearHistory' }); b.textContent = 'Clear history'; delete b.dataset.confirm; return; }
+    b.dataset.confirm = '1';
+    b.textContent = 'Click again to clear';
+    setTimeout(() => { if (b.dataset.confirm) { b.textContent = 'Clear history'; delete b.dataset.confirm; } }, 3000);
+  });
+
+  const links = [...document.querySelectorAll('nav a')];
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.hash === `#${en.target.id}`));
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  document.querySelectorAll('section').forEach((s) => io.observe(s));
+
+  window.__seoranReceive = (msg) => { if (msg.t === 'data') render(msg.data); };
+  if (window.seoran) seoran.send({ t: 'hello' });
+</script>
+</body>
+</html>

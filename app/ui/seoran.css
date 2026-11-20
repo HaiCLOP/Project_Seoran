@@ -1,0 +1,185 @@
+/* Seoran design tokens. Shared by the browser UI and every seoran:// page. */
+:root {
+  color-scheme: light;
+  --bg: #f3f0ea;
+  --bg-2: #ebe7df;
+  --surface: #ffffff;
+  --surface-2: #f7f5f1;
+  --hover: rgba(24, 23, 28, 0.06);
+  --press: rgba(24, 23, 28, 0.1);
+  --ink: #18171c;
+  --ink-2: #55525c;
+  --ink-3: #8b8792;
+  --line: rgba(24, 23, 28, 0.1);
+  --line-2: rgba(24, 23, 28, 0.16);
+  --accent: #e8552d;
+  --accent-2: #c9431e;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(232, 85, 45, 0.12);
+  --good: #1d9a68;
+  --good-soft: rgba(29, 154, 104, 0.12);
+  --warn: #b7791f;
+  --shadow-1: 0 1px 2px rgba(20, 18, 24, 0.08), 0 1px 6px rgba(20, 18, 24, 0.05);
+  --shadow-2: 0 18px 48px -12px rgba(20, 18, 24, 0.28), 0 4px 12px rgba(20, 18, 24, 0.08);
+  --ring: 0 0 0 3px rgba(232, 85, 45, 0.28);
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 18px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --spring: var(--ease);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141317;
+    --bg-2: #0f0e12;
+    --surface: #1e1d23;
+    --surface-2: #26252c;
+    --hover: rgba(255, 255, 255, 0.07);
+    --press: rgba(255, 255, 255, 0.11);
+    --ink: #f2efea;
+    --ink-2: #b6b2bc;
+    --ink-3: #7f7b87;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-2: rgba(255, 255, 255, 0.14);
+    --accent: #ff6a3d;
+    --accent-2: #ff8a63;
+    --accent-ink: #1a0b05;
+    --accent-soft: rgba(255, 106, 61, 0.16);
+    --good: #3ecf8e;
+    --good-soft: rgba(62, 207, 142, 0.14);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.35);
+    --ring: 0 0 0 3px rgba(255, 106, 61, 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141317;
+  --bg-2: #0f0e12;
+  --surface: #1e1d23;
+  --surface-2: #26252c;
+  --hover: rgba(255, 255, 255, 0.07);
+  --press: rgba(255, 255, 255, 0.11);
+  --ink: #f2efea;
+  --ink-2: #b6b2bc;
+  --ink-3: #7f7b87;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --accent: #ff6a3d;
+  --accent-2: #ff8a63;
+  --accent-ink: #1a0b05;
+  --accent-soft: rgba(255, 106, 61, 0.16);
+  --good: #3ecf8e;
+  --good-soft: rgba(62, 207, 142, 0.14);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --ring: 0 0 0 3px rgba(255, 106, 61, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: default;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* Switch, shared by the shield popover and settings. */
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: none;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: var(--line-2);
+  transition: background 0.2s var(--ease);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s var(--ease);
+}
+
+.switch[aria-checked="true"] {
+  background: var(--accent);
+}
+
+.switch[aria-checked="true"]::after {
+  transform: translateX(16px);
+}
+
+kbd {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--ink-3);
+  border: 1px solid var(--line-2);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0 5px;
+  line-height: 16px;
+  background: var(--surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

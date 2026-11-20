@@ -1,0 +1,721 @@
+/* Seoran browser chrome: tab strip, toolbar and the panels that open over
+   the page. Motion is deliberately minimal: state changes are instant or a
+   short colour fade, never a bounce. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  user-select: none;
+}
+
+#bar {
+  position: relative;
+  height: 88px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+#resize-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  cursor: n-resize;
+  z-index: 5;
+}
+
+.maximized #resize-top {
+  display: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+/* ---- tab strip ------------------------------------------------------- */
+#tabrow {
+  height: 42px;
+  padding: 6px 0 0 8px;
+  gap: 2px;
+}
+
+#brand {
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+}
+
+#brand img {
+  display: block;
+}
+
+#tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 0 1 auto;
+  height: 36px;
+  overflow: hidden;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  width: 220px;
+  min-width: 40px;
+  flex: 0 1 220px;
+  padding: 0 4px 0 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  transition: background-color 0.12s var(--ease), color 0.12s var(--ease);
+}
+
+.tab:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.tab.active {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.tab + .tab:not(.active):not(:hover)::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: var(--line);
+}
+
+.tab.active + .tab::before,
+.tab:hover + .tab::before {
+  display: none;
+}
+
+.tab.dragging {
+  z-index: 3;
+  transition: none;
+  background: var(--surface);
+  border-color: var(--line-2);
+}
+
+.tab.sleeping .fav,
+.tab.sleeping .title {
+  opacity: 0.55;
+}
+
+.tab .fav {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tab .fav img {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+/* Loading: a thin spinner replaces the favicon. */
+.tab.loading .fav > * {
+  visibility: hidden;
+}
+
+.tab.loading .fav::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tab .title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  mask-image: linear-gradient(90deg, #000 88%, transparent);
+}
+
+.tab .close {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  opacity: 0;
+}
+
+.tab:hover .close,
+.tab.active .close {
+  opacity: 1;
+}
+
+.tab .close:hover {
+  background: var(--press);
+  color: var(--ink);
+}
+
+.tab.narrow {
+  padding: 0;
+  justify-content: center;
+}
+
+.tab.narrow .title,
+.tab.narrow:not(.active) .close {
+  display: none;
+}
+
+.tab.narrow.active .fav {
+  display: none;
+}
+
+#newtab {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+.drag {
+  flex: 1;
+  align-self: stretch;
+  min-width: 40px;
+}
+
+#wincontrols {
+  display: flex;
+  align-self: flex-start;
+  margin-top: -6px;
+}
+
+#wincontrols button {
+  width: 46px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
+  font-size: 10px;
+  color: var(--ink);
+}
+
+#wincontrols button:hover {
+  background: var(--hover);
+}
+
+#wincontrols button.close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+
+/* ---- toolbar ---------------------------------------------------------- */
+#toolbar {
+  height: 45px;
+  padding: 0 8px;
+  gap: 2px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.icon-btn:active:not(:disabled) {
+  background: var(--press);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+}
+
+.icon-btn.sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+}
+
+#omnibox {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  margin: 0 6px;
+  padding: 0 4px 0 8px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+}
+
+#omnibox:hover {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+#omnibox.focused {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+#site-badge {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  color: var(--ink-3);
+}
+
+#site-badge.secure {
+  color: var(--ink-2);
+}
+
+#site-badge.insecure {
+  color: var(--warn);
+}
+
+#site-badge img {
+  width: 14px;
+  height: 14px;
+}
+
+#address {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 13.5px;
+  user-select: text;
+}
+
+#address::placeholder {
+  color: var(--ink-3);
+}
+
+#star.on {
+  color: var(--accent);
+}
+
+.shield-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 8px 0 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.shield-btn:hover {
+  background: var(--hover);
+}
+
+.shield-btn.active {
+  color: var(--accent);
+}
+
+.shield-btn.off {
+  color: var(--ink-3);
+}
+
+.shield-ic {
+  display: grid;
+}
+
+/* ---- panels over the page ----------------------------------------------
+   The view is clipped to these boxes, so they are opaque, square-ish and
+   carry a hairline border instead of a drop shadow. */
+#layer {
+  position: fixed;
+  inset: 88px 0 0 0;
+  pointer-events: none;
+}
+
+.panel {
+  position: absolute;
+  pointer-events: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.drop {
+  top: 4px;
+}
+
+/* omnibox suggestions */
+#suggest {
+  padding: 4px;
+}
+
+.sg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--ink);
+}
+
+.sg .sg-ic {
+  width: 20px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+
+.sg .sg-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sg .sg-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sg .sg-sub {
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.sg mark {
+  background: none;
+  color: inherit;
+  font-weight: 650;
+}
+
+.sg .sg-go {
+  visibility: hidden;
+  color: var(--ink-3);
+}
+
+.sg:hover {
+  background: var(--hover);
+}
+
+.sg.sel {
+  background: var(--press);
+}
+
+.sg.sel .sg-ic {
+  color: var(--ink);
+}
+
+.sg.sel .sg-go {
+  visibility: visible;
+}
+
+/* shield popover */
+.pop {
+  width: 300px;
+}
+
+.sp-head {
+  padding: 16px 16px 12px;
+}
+
+.sp-count b {
+  display: block;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-count span {
+  color: var(--ink-2);
+}
+
+.sp-site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.sp-site-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+  white-space: nowrap;
+}
+
+.sp-site-sub {
+  color: var(--ink-3);
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.sp-rows {
+  padding: 6px 8px 12px;
+}
+
+.sp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.sp-row.muted {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.sp-lists {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 12px 0;
+}
+
+.sp-lists span {
+  font-size: 11px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* menu */
+#menu {
+  width: 250px;
+  padding: 4px;
+}
+
+.mi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+}
+
+.mi:hover,
+.mi.sel {
+  background: var(--hover);
+}
+
+.mi .ic {
+  color: var(--ink-2);
+}
+
+.mi span {
+  flex: 1;
+}
+
+.mi kbd {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+/* command palette */
+#palette {
+  left: 50%;
+  top: 48px;
+  width: min(600px, calc(100vw - 32px));
+  transform: translateX(-50%);
+}
+
+.pal-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pal-ic {
+  color: var(--ink-3);
+  display: grid;
+}
+
+#pal-q {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  user-select: text;
+}
+
+#pal-list {
+  max-height: min(400px, calc(100vh - 240px));
+  overflow-y: auto;
+  padding: 4px;
+  scrollbar-width: thin;
+}
+
+.pal-group {
+  padding: 8px 10px 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.pal-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.pal-foot {
+  display: flex;
+  gap: 16px;
+  padding: 7px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.pal-foot kbd {
+  margin-right: 3px;
+}
+
+/* toasts */
+#toasts {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 6px 0 14px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  pointer-events: auto;
+  white-space: nowrap;
+  max-width: 560px;
+}
+
+.toast span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast.no-action {
+  padding-right: 14px;
+}
+
+.toast button {
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-2);
+  font-weight: 650;
+}
+
+.toast button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
