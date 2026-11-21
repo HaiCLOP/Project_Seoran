@@ -31,11 +31,12 @@ $('.pal-ic').innerHTML = icon('search', 18);
 const hostOf = (url) => {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
 };
+const POPS = ['volt', 'hot', 'sky', 'tang', 'lilac', 'mint'];
 const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const monogram = (title, url) => {
   const base = hostOf(url) || title || '?';
   const letter = (base.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
-  return `<span class="fav mono">${esc(letter)}</span>`;
+  return `<span class="fav mono ink-${POPS[hue(base) % POPS.length]}">${esc(letter)}</span>`;
 };
 const prettyUrl = (url) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
@@ -230,7 +231,7 @@ function applyLook({ theme, plastic }) {
   const root = document.documentElement;
   if (theme && theme !== 'system') root.dataset.theme = theme;
   else delete root.dataset.theme;
-  if (plastic && plastic !== 'blue') root.dataset.signal = plastic;
+  if (plastic && plastic !== 'volt') root.dataset.signal = plastic;
   else delete root.dataset.signal;
 }
 
@@ -286,6 +287,7 @@ function renderShield() {
   st.hidden = !sh.site || !sh.enabled;
   st.setAttribute('aria-checked', String(sh.siteActive));
   $('#sp-main').hidden = !sh.site || !sh.enabled;
+  $('#sp-main').classList.toggle('off', !sh.siteActive);
   odometer($('#sp-blocked'), sh.siteActive ? sh.blocked : 0);
   $('#sp-count-label').textContent = sh.siteActive ? 'blocked on this page' : 'blocked (shield is off here)';
   const top = sh.siteActive ? sh.top || [] : [];
@@ -310,17 +312,17 @@ $('#sp-update').addEventListener('click', () => { send({ t: 'updateFilters' }); 
 const themeLabel = { system: 'System', light: 'Light', dark: 'Dark' };
 // Accent colours.
 const SIGNALS = [
-  ['blue', 'Blue', '#1a5fd6'],
-  ['orange', 'Orange', '#e8590c'],
-  ['green', 'Green', '#1e8e3e'],
-  ['teal', 'Teal', '#0e8a99'],
-  ['pink', 'Pink', '#d6336c'],
-  ['graphite', 'Graphite', '#50545e'],
+  ['volt', 'Volt'],
+  ['hot', 'Hot pink'],
+  ['sky', 'Sky'],
+  ['tang', 'Tangerine'],
+  ['lilac', 'Lilac'],
+  ['mint', 'Mint'],
 ];
 function renderMenu() {
   const item = (a, ic, label, key = '', disabled = false) =>
     `<button class="mi" role="menuitem" data-a="${a}" ${disabled ? 'disabled' : ''}>${icon(ic)}<span>${label}</span>${key ? `<kbd>${key}</kbd>` : ''}</button>`;
-  const current = S.plastic || 'blue';
+  const current = S.plastic || 'volt';
   $('#menu')._look = `${S.theme}|${S.plastic}|${S.bookmarked}|${S.closedCount}`;
   void current;
   $('#menu').innerHTML = [
@@ -566,7 +568,7 @@ function commands() {
     { a: 'shieldGlobal', label: sh.enabled ? 'Turn shield off everywhere' : 'Turn shield on everywhere', ic: 'shield' },
     { a: 'updateFilters', label: 'Update shield filter lists', ic: 'download' },
     { a: 'theme', label: `Switch theme (now ${themeLabel[S.theme] || 'System'})`, ic: 'moon' },
-    ...SIGNALS.filter(([id]) => id !== (S.plastic || 'blue')).map(([id, name]) => ({ a: `plastic:${id}`, label: `Accent colour: ${name}`, ic: 'swatch' })),
+    ...SIGNALS.filter(([id]) => id !== (S.plastic || 'volt')).map(([id, name]) => ({ a: `plastic:${id}`, label: `Accent colour: ${name}`, ic: 'swatch' })),
     { a: 'settings', label: 'Open settings', ic: 'settings', key: 'Ctrl+,' },
     { a: 'devtools', label: 'Developer tools', ic: 'code', key: 'F12' },
   ].filter((c) => !c.off);

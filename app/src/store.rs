@@ -22,7 +22,7 @@ pub struct Settings {
     pub shields_enabled: bool,
     pub allowed_sites: Vec<String>,
     pub theme: String,
-    /// The accent colour: blue, orange, green, teal, pink or graphite.
+    /// The accent ink: volt, hot, sky, tang, lilac or mint.
     pub plastic: String,
     pub restore_session: bool,
     pub sleep_tabs_after_min: u64,
@@ -36,7 +36,7 @@ impl Default for Settings {
             shields_enabled: true,
             allowed_sites: Vec::new(),
             theme: "system".into(),
-            plastic: "blue".into(),
+            plastic: "volt".into(),
             restore_session: true,
             sleep_tabs_after_min: 20,
             blocked_total: 0,
@@ -44,7 +44,7 @@ impl Default for Settings {
     }
 }
 
-pub const PLASTICS: &[&str] = &["blue", "orange", "green", "teal", "pink", "graphite"];
+pub const PLASTICS: &[&str] = &["volt", "hot", "sky", "tang", "lilac", "mint"];
 
 pub const SEARCH_ENGINES: &[(&str, &str, &str)] = &[
     ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q="),
@@ -140,12 +140,12 @@ impl Store {
         let mut settings: Settings = read_json(&dir.join("settings.json"));
         // Colour names from earlier versions.
         let renamed = match settings.plastic.as_str() {
-            "grape" => Some("blue"),
-            "tangerine" => Some("orange"),
-            "lime" => Some("green"),
-            "bondi" => Some("teal"),
-            "strawberry" => Some("pink"),
-            p if !PLASTICS.contains(&p) => Some("blue"),
+            "orange" | "tangerine" => Some("tang"),
+            "green" | "lime" => Some("mint"),
+            "teal" | "bondi" => Some("sky"),
+            "pink" | "strawberry" => Some("hot"),
+            "grape" => Some("lilac"),
+            p if !PLASTICS.contains(&p) => Some("volt"),
             _ => None,
         };
         if let Some(p) = renamed {

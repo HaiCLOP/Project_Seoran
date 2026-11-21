@@ -13,50 +13,69 @@
     overflow: hidden;
     background: var(--page);
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto 1fr auto;
   }
 
-  /* The field: a faint dot grid that leans toward the cursor and ripples
-     each time the shield blocks something. Drawn on a canvas behind it all. */
-  #field { position: fixed; inset: 0; z-index: 0; }
+  /* top-right: the two ways out of this page */
+  .top {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 20px 0;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 16px;
+    background: transparent;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .pill:hover { background: var(--ink); border-color: var(--ink); color: var(--page); }
 
   main {
-    position: relative;
-    z-index: 1;
     align-self: center;
-    width: min(680px, calc(100vw - 48px));
+    width: min(960px, calc(100vw - 64px));
     margin: 0 auto;
-    padding-bottom: 6vh;
+    padding-bottom: 4vh;
   }
 
+  /* The wordmark, printed twice: ink on top, the accent ink offset beneath. */
   .word {
-    margin: 0 0 30px;
+    margin: 0 0 28px -0.04em;
     font-family: var(--font-display);
-    font-size: clamp(64px, 9vw, 112px);
-    font-weight: 650;
+    font-size: clamp(84px, 11vw, 156px);
+    font-weight: 800;
     font-stretch: 92%;
-    letter-spacing: -0.03em;
-    line-height: 0.95;
-    text-align: center;
+    letter-spacing: -0.015em;
+    line-height: 0.86;
     color: var(--ink);
+    text-shadow: 0.04em 0.04em 0 var(--signal);
   }
-  .word .clip { display: inline-block; overflow: hidden; padding: 0 0.04em 0.06em; }
+  .word .clip { display: inline-block; overflow: hidden; padding: 0 0.08em 0.1em 0; }
   .word .clip > span { display: inline-block; }
-  .word .dot { color: var(--signal-text); }
 
+  /* The search bar is the one inverted surface: chalk at night, ink on paper. */
   form {
     display: flex;
     align-items: center;
-    gap: 10px;
-    height: 52px;
-    padding: 0 18px;
-    border-radius: 26px;
-    background: var(--panel);
-    box-shadow: 0 0 0 1px var(--line), 0 6px 20px -12px rgba(0, 0, 0, 0.25);
-    transition: box-shadow 0.2s var(--ease);
+    gap: 12px;
+    height: 60px;
+    padding: 0 22px;
+    border-radius: 30px;
+    background: var(--ink);
+    color: var(--page);
+    box-shadow: 5px 5px 0 var(--signal);
+    transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
   }
-  form:focus-within { box-shadow: 0 0 0 2px var(--signal), 0 8px 26px -12px rgba(0, 0, 0, 0.3); }
-  form .ic { color: var(--ink-3); flex: none; }
+  form:focus-within { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--signal); }
+  form .ic { flex: none; opacity: 0.75; }
   #q {
     flex: 1;
     min-width: 0;
@@ -64,260 +83,159 @@
     border: 0;
     outline: 0;
     background: transparent;
-    font-size: 15.5px;
+    color: var(--page);
+    caret-color: var(--page);
+    font-size: 17px;
+    font-weight: 500;
   }
-  #q::placeholder { color: var(--ink-3); }
+  #q::placeholder { color: color-mix(in srgb, var(--page) 62%, var(--ink)); }
   #q:focus-visible { box-shadow: none; }
+  #q::selection { background: var(--signal); color: var(--on-pop); }
 
+  /* Top sites: solid blocks of ink, each its own colour. */
   .sites {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 92px);
-    justify-content: center;
-    gap: 4px;
-    margin-top: 34px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 40px;
   }
   .wrap { position: relative; }
   .site {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 9px;
-    padding: 10px 0 8px;
-    border-radius: var(--r);
-    color: var(--ink);
+    justify-content: space-between;
+    height: 112px;
+    padding: 14px 16px 14px;
+    border-radius: 16px;
+    background: var(--pop);
+    color: var(--on-pop);
     text-decoration: none;
-    transition: background-color 0.15s var(--ease);
+    transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
   }
-  .site:hover { background: var(--hover); }
-  .site:focus-visible { box-shadow: var(--ring); }
-  .tile {
+  .site:hover { transform: translate(-3px, -3px); box-shadow: 4px 4px 0 var(--ink); }
+  .site:active { transform: none; box-shadow: 0 0 0 var(--ink); transition-duration: 0.06s; }
+  .site:focus-visible { box-shadow: 0 0 0 3px var(--page), 0 0 0 5px var(--ink); }
+  .face {
     display: grid;
     place-items: center;
-    width: 50px;
-    height: 50px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: var(--panel);
-    box-shadow: 0 0 0 1px var(--line);
-    transition: transform 0.35s var(--ease), box-shadow 0.2s var(--ease);
+    background: #fffaf2;
   }
-  .site:hover .tile { box-shadow: 0 0 0 1px var(--line-2), 0 6px 14px -8px rgba(0, 0, 0, 0.35); }
-  .tile img { width: 24px; height: 24px; }
-  .tile .letter { font-family: var(--font-display); font-size: 19px; font-weight: 600; color: var(--ink-2); }
+  .face img { width: 22px; height: 22px; }
+  .face .letter { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--on-pop); }
   .site .name {
-    max-width: 84px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 12.5px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 750;
+    font-stretch: 90%;
+    letter-spacing: -0.015em;
   }
   .forget {
     position: absolute;
-    top: 4px;
-    right: 6px;
-    width: 22px;
-    height: 22px;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
     display: grid;
     place-items: center;
     border: 0;
     border-radius: 50%;
-    background: transparent;
-    color: var(--ink-3);
+    background: var(--on-pop);
+    color: #fffaf2;
     opacity: 0;
-    transition: opacity 0.15s var(--ease);
+    transition: opacity 0.15s var(--ease), transform 0.18s var(--ease);
   }
   .wrap:hover .forget, .forget:focus-visible { opacity: 1; }
-  .forget:hover { background: var(--press); color: var(--ink); }
+  .wrap:hover .forget { transform: translate(-3px, -3px); }
+  .empty-sites { margin-top: 36px; color: var(--ink-2); font-size: 14px; }
 
-  /* Footer rail: the shield's count, a live ticker of what it blocked, and
-     the customize button, on one hairline. */
-  footer {
+  /* The band: what the shield has done, scrolling past in the accent ink. */
+  .band {
     position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
     align-items: center;
-    gap: 24px;
-    height: 48px;
-    padding: 0 12px 0 24px;
-    border-top: 1px solid var(--line);
-    background: color-mix(in srgb, var(--page) 88%, transparent);
-    font-size: 12.5px;
-    color: var(--ink-2);
-  }
-  .count { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
-  .count .ic { color: var(--signal-text); }
-  .count b { color: var(--ink); font-weight: 600; }
-  .ticker {
-    position: relative;
+    height: 64px;
     overflow: hidden;
-    min-width: 0;
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  }
-  .ticker .track {
-    display: inline-flex;
-    gap: 28px;
+    background: var(--signal);
+    color: var(--on-pop);
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    font-stretch: 88%;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
     white-space: nowrap;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--ink-3);
+  }
+  .band.off { background: var(--panel-2); color: var(--ink-2); }
+  .band .track {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding-left: 28px;
     animation: tick var(--tick, 40s) linear infinite;
   }
-  .ticker .track span::before { content: "\2715  "; color: var(--signal-text); opacity: 0.7; }
-  .ticker:hover .track { animation-play-state: paused; }
-  .ticker.empty { visibility: hidden; }
+  .band.still .track { animation: none; }
+  .band:hover .track { animation-play-state: paused; }
+  .band .item { padding-right: 22px; }
+  .band .item.host { font-weight: 650; }
+  .band .slash { padding-right: 22px; opacity: 0.55; }
+  .band .total { display: inline-flex; align-items: center; gap: 12px; }
+  .band .total .roll { font-weight: 800; }
+  .band .total.bump .roll { animation: bump 0.32s var(--ease); }
+  @keyframes bump { 40% { transform: scale(1.18); } }
   @keyframes tick { to { transform: translateX(-50%); } }
-  .footer-end { display: flex; align-items: center; gap: 4px; }
-  .footer-end a { color: var(--signal-text); text-decoration: none; padding: 0 8px; }
-  .footer-end a:hover { text-decoration: underline; text-underline-offset: 2px; }
-  .customize {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--ink-2);
-    transition: background-color 0.15s var(--ease);
-  }
-  .customize:hover { background: var(--hover); color: var(--ink); }
 
-  /* One orchestrated entrance on load: the word rises out of its line,
-     then search, sites and the rail follow. Content is visible by default
-     when motion is reduced. */
-  .reveal .word .clip > span { animation: rise 0.7s var(--ease) both; }
-  .reveal form { animation: up 0.6s 0.12s var(--ease) both; }
-  .reveal .site { animation: up 0.55s var(--ease) both; animation-delay: calc(0.2s + var(--i) * 0.035s); }
-  .reveal footer { animation: fade 0.6s 0.35s var(--ease) both; }
+  /* One entrance on load: the word rises out of its line, the rest follows. */
+  .reveal .word .clip > span { animation: rise 0.75s var(--ease) both; }
+  .reveal form { animation: up 0.6s 0.14s var(--ease) both; }
+  .reveal .wrap { animation: up 0.55s var(--ease) both; animation-delay: calc(0.22s + var(--i) * 0.04s); }
+  .reveal .band { animation: band 0.6s 0.3s var(--ease) both; }
   @keyframes rise { from { transform: translateY(105%); } }
-  @keyframes up { from { opacity: 0; transform: translateY(10px); } }
-  @keyframes fade { from { opacity: 0; } }
+  @keyframes up { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes band { from { transform: translateY(100%); } }
   @media (prefers-reduced-motion: reduce) {
     .reveal * { animation: none !important; }
-    .ticker .track { animation: none; }
+    .band .track { animation: none; }
   }
-  @media (max-width: 720px) { footer { grid-template-columns: auto auto; } .ticker { display: none; } }
+  @media (max-width: 760px) { .sites { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body class="reveal">
-  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="top">
+    <a class="pill" href="#" id="shield-link"><span id="shic"></span>Shield</a>
+    <a class="pill" href="#" id="customize"><span id="cuic"></span>Customize</a>
+  </div>
   <main>
-    <h1 class="word"><span class="clip"><span>Seoran<span class="dot">.</span></span></span></h1>
+    <h1 class="word"><span class="clip"><span>Seoran</span></span></h1>
     <form id="search" autocomplete="off" role="search">
-      <span id="sic"></span>
+      <span id="sic" class="ic"></span>
       <input id="q" type="search" spellcheck="false" autocomplete="off" placeholder="Search the web" aria-label="Search the web">
     </form>
     <div id="sites"></div>
   </main>
-  <footer>
-    <div class="count" id="count"><span id="nic"></span><span><b id="blocked">0</b> blocked since you installed Seoran</span></div>
-    <div class="ticker" id="ticker" aria-label="Recently blocked"><div class="track" id="track"></div></div>
-    <div class="footer-end"><a href="#" id="shield-link">Shield settings</a><button class="customize" id="customize" title="Customize Seoran" aria-label="Customize Seoran"></button></div>
-  </footer>
+  <div class="band still" id="band" role="status" aria-live="off"><div class="track" id="track"></div></div>
 <script>
   'use strict';
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  $('#sic').innerHTML = icon('search', 18);
-  $('#nic').innerHTML = icon('shieldCheck', 15);
-  $('#customize').innerHTML = icon('settings', 18);
+  const POPS = ['volt', 'hot', 'sky', 'tang', 'lilac', 'mint'];
+  $('#sic').innerHTML = icon('search', 20);
+  $('#shic').innerHTML = icon('shieldCheck', 15);
+  $('#cuic').innerHTML = icon('settings', 15);
   setTimeout(() => document.body.classList.remove('reveal'), 1400);
 
   window.__seoranLook = ({ theme, plastic }) => {
     const r = document.documentElement;
     if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
-    if (plastic && plastic !== 'blue') r.dataset.signal = plastic; else delete r.dataset.signal;
-    field.colors();
+    if (plastic && plastic !== 'volt') r.dataset.signal = plastic; else delete r.dataset.signal;
   };
 
-  // ---- the field ------------------------------------------------------------
-  const field = (() => {
-    const cv = $('#field');
-    const ctx = cv.getContext('2d');
-    const STEP = 26;
-    let W = 0, H = 0, dpr = 1, dots = [], ink = '#000', accent = '#00f';
-    let mx = -1e4, my = -1e4, raf = 0, ripples = [], lastRipple = 0;
-
-    function colors() {
-      const cs = getComputedStyle(document.documentElement);
-      ink = cs.getPropertyValue('--ink').trim() || '#000';
-      accent = cs.getPropertyValue('--signal').trim() || '#00f';
-      kick();
-    }
-    function resize() {
-      dpr = devicePixelRatio || 1;
-      W = innerWidth; H = innerHeight;
-      cv.width = W * dpr; cv.height = H * dpr;
-      cv.style.width = `${W}px`; cv.style.height = `${H}px`;
-      dots = [];
-      const ox = (W % STEP) / 2, oy = (H % STEP) / 2;
-      for (let y = oy; y < H; y += STEP) for (let x = ox; x < W; x += STEP) dots.push(x, y);
-      kick();
-    }
-    function frame(t) {
-      raf = 0;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      ripples = ripples.filter((r) => t - r.t0 < 1800);
-      let busy = ripples.length > 0;
-      for (let i = 0; i < dots.length; i += 2) {
-        const x = dots[i], y = dots[i + 1];
-        const dm = Math.hypot(x - mx, y - my);
-        let k = Math.max(0, 1 - dm / 140) * 0.75;
-        for (const r of ripples) {
-          const age = t - r.t0;
-          const ring = Math.abs(Math.hypot(x - r.x, y - r.y) - age * 0.5);
-          k = Math.max(k, Math.max(0, 1 - ring / 34) * (1 - age / 1800));
-        }
-        const lit = k > 0.02;
-        ctx.globalAlpha = lit ? 0.14 + 0.5 * k : 0.1;
-        ctx.fillStyle = lit ? accent : ink;
-        const rad = 1 + 1.5 * k;
-        ctx.beginPath();
-        ctx.arc(x, y, rad, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      if (busy && !document.hidden) raf = requestAnimationFrame(frame);
-    }
-    function kick() { if (!raf) raf = requestAnimationFrame(frame); }
-    if (!still) {
-      addEventListener('pointermove', (e) => { mx = e.clientX; my = e.clientY; kick(); }, { passive: true });
-      document.addEventListener('pointerleave', () => { mx = my = -1e4; kick(); });
-    }
-    addEventListener('resize', resize);
-    resize();
-    colors();
-    return {
-      colors,
-      // A ripple from (x, y): one per blocked request, at most every 250ms.
-      ripple(x, y) {
-        if (still) return;
-        const t = performance.now();
-        if (t - lastRipple < 250) return;
-        lastRipple = t;
-        ripples.push({ x, y, t0: t });
-        kick();
-      },
-    };
-  })();
-
-  // Magnetic tiles: the icon leans toward the cursor.
-  document.addEventListener('pointermove', (e) => {
-    if (still) return;
-    const site = e.target.closest && e.target.closest('.site');
-    for (const t of document.querySelectorAll('.tile.pull')) if (!site || !site.contains(t)) { t.classList.remove('pull'); t.style.transform = ''; }
-    if (!site) return;
-    const tile = site.querySelector('.tile');
-    const r = tile.getBoundingClientRect();
-    const dx = (e.clientX - (r.left + r.width / 2)) * 0.18;
-    const dy = (e.clientY - (r.top + r.height / 2)) * 0.18;
-    tile.classList.add('pull');
-    tile.style.transform = `translate(${Math.max(-6, Math.min(6, dx))}px, ${Math.max(-6, Math.min(6, dy))}px)`;
-  }, { passive: true });
-
-  // ---- data ------------------------------------------------------------------
+  // ---- top sites ------------------------------------------------------------
   function face(s, site) {
     const letter = esc((site.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase());
     let origin = '';
@@ -328,43 +246,59 @@
       : `<span class="letter">${letter}</span>`;
   }
 
-  function ticker(recent) {
-    const list = (recent || []).slice(0, 16);
-    $('#ticker').classList.toggle('empty', !list.length);
-    if (!list.length) return;
-    const items = list.map((h) => `<span>${esc(h)}</span>`).join('');
+  // ---- the band ---------------------------------------------------------------
+  let state = { total: null, recent: [], on: true };
+  function band() {
+    const b = $('#band');
     const track = $('#track');
-    const key = list.join(',');
-    if (track.dataset.key === key) return;
+    b.classList.toggle('off', !state.on);
+    if (!state.on) {
+      b.classList.add('still');
+      track.dataset.key = 'off';
+      track.innerHTML = '<span class="item">Shield is off. Ads and trackers load normally.</span>';
+      return;
+    }
+    const hosts = [...new Set((state.recent || []).map((h) => h.replace(/^www\./, '')))].slice(0, 14);
+    const key = hosts.join(',');
+    if (track.dataset.key === key && track.querySelector('.total')) return;
     track.dataset.key = key;
-    track.innerHTML = items + items; // doubled so the loop is seamless
-    track.style.setProperty('--tick', `${Math.max(24, list.length * 5)}s`);
+    const head = '<span class="item total"><span class="n"></span><span>blocked since you installed Seoran</span></span>';
+    const run = hosts.map((h) => `<span class="slash">/</span><span class="item host">${esc(h)}</span>`).join('');
+    // Doubled so the loop is seamless; only scroll when there is something to show.
+    track.innerHTML = hosts.length ? `${head}${run}<span class="slash">/</span>${head}${run}<span class="slash">/</span>` : head;
+    b.classList.toggle('still', !hosts.length);
+    track.style.setProperty('--tick', `${Math.max(26, hosts.length * 5)}s`);
+    for (const n of track.querySelectorAll('.n')) odometer(n, state.total || 0);
   }
 
-  let total = null;
-  function setTotal(n) {
-    if (total !== null && n > total) {
-      const r = $('#nic').getBoundingClientRect();
-      field.ripple(r.left + r.width / 2, r.top + r.height / 2);
+  function setTotal(n, recent) {
+    const grew = state.total !== null && n > state.total;
+    state.total = n;
+    if (recent) state.recent = recent;
+    band();
+    for (const el of document.querySelectorAll('#track .n')) odometer(el, n);
+    if (grew) {
+      for (const t of document.querySelectorAll('#track .total')) {
+        t.classList.remove('bump');
+        void t.offsetWidth;
+        t.classList.add('bump');
+      }
     }
-    total = n;
-    odometer($('#blocked'), n);
   }
 
   function render(d) {
     __seoranLook(d);
-    setTotal(d.blockedTotal || 0);
-    $('#count').hidden = !d.shieldOn;
-    ticker(d.recent);
+    state.on = !!d.shieldOn;
+    setTotal(d.blockedTotal || 0, d.recent || []);
     $('#q').placeholder = d.engine ? `Search ${d.engine} or type a web address` : 'Search the web';
     $('#sites').innerHTML = d.topSites.length ? `<div class="sites">${d.topSites.slice(0, 8).map((s, i) => {
       const site = s.site || s.url;
       const name = site.replace(/\.(com|org|net|io|co|xyz|in)$/, '');
-      return `<div class="wrap">
-        <a class="site" href="${esc(s.url)}" title="${esc(s.title || site)}" style="--i:${i}"><span class="tile">${face(s, site)}</span><span class="name">${esc(name)}</span></a>
-        <button class="forget" data-site="${esc(site)}" aria-label="Remove ${esc(site)}">${icon('x', 12)}</button>
+      return `<div class="wrap ink-${POPS[i % POPS.length]}" style="--i:${i}">
+        <a class="site" href="${esc(s.url)}" title="${esc(s.title || site)}"><span class="face">${face(s, site)}</span><span class="name">${esc(name)}</span></a>
+        <button class="forget" data-site="${esc(site)}" aria-label="Remove ${esc(site)}">${icon('x', 13)}</button>
       </div>`;
-    }).join('')}</div>` : '';
+    }).join('')}</div>` : '<p class="empty-sites">Sites you visit often will show up here.</p>';
   }
 
   $('#sites').addEventListener('click', (e) => {
@@ -377,12 +311,12 @@
     if (q) seoran.send({ t: 'navigate', input: q });
   });
   const openSettings = (e) => { if (e) e.preventDefault(); seoran.send({ t: 'navigate', input: 'seoran://settings' }); };
-  $('#customize').addEventListener('click', () => openSettings());
+  $('#customize').addEventListener('click', openSettings);
   $('#shield-link').addEventListener('click', openSettings);
 
   window.__seoranReceive = (msg) => {
     if (msg.t === 'data') render(msg.data);
-    if (msg.t === 'total') { setTotal(msg.n); ticker(msg.recent); }
+    if (msg.t === 'total') setTotal(msg.n, msg.recent);
   };
   if (window.seoran) seoran.send({ t: 'hello' });
 </script>

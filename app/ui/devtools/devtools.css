@@ -91,8 +91,8 @@ code,
 }
 
 .hbtn.on {
-  background: var(--signal-soft);
-  color: var(--signal-text);
+  background: var(--signal);
+  color: var(--on-pop);
 }
 
 #views {
@@ -130,7 +130,8 @@ code,
   left: 8px;
   right: 8px;
   bottom: 0;
-  height: 2px;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
   background: var(--signal);
 }
 

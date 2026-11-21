@@ -83,7 +83,7 @@ window.sd = {
 window.__seoranLook = ({ theme, plastic }) => {
   const r = document.documentElement;
   if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
-  if (plastic && plastic !== 'blue') r.dataset.signal = plastic; else delete r.dataset.signal;
+  if (plastic && plastic !== 'volt') r.dataset.signal = plastic; else delete r.dataset.signal;
 };
 
 // ---- chrome of the panel -------------------------------------------------------

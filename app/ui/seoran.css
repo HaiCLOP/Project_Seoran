@@ -1,6 +1,7 @@
-/* Seoran design tokens: a first-class Chromium browser in the Brave mould.
-   Neutral frame and toolbar, a rounded address bar, 12px popups, and one
-   accent colour the user picks. */
+/* Seoran design tokens: "riso pop". Flat printed inks on near-black night
+   or warm paper. Colour comes in solid blocks with ink-black text on top,
+   never as gradients, glows or tints. One pop colour is the user's accent;
+   the others mark places (site tiles, settings sections). */
 
 @font-face {
   font-family: "Bricolage Grotesque";
@@ -13,38 +14,48 @@
 :root {
   color-scheme: light;
 
-  /* surfaces, light */
-  --frame: #e6e7eb;          /* tab strip */
-  --frame-hover: #dcdde2;
-  --toolbar: #ffffff;        /* toolbar and active tab */
-  --field: #eff0f3;          /* address bar */
-  --field-hover: #e7e8ec;
-  --panel: #ffffff;          /* popups and cards */
-  --panel-2: #f3f4f6;
-  --page: #f3f4f6;           /* settings background */
-  --ink: #1c1e24;
-  --ink-2: #50545e;
-  --ink-3: #686c77;
-  --line: rgba(15, 18, 28, 0.1);
-  --line-2: rgba(15, 18, 28, 0.17);
-  --hover: rgba(15, 18, 28, 0.06);
-  --press: rgba(15, 18, 28, 0.11);
-  --badge: #5b5f69;
-  --ok: #1a7f3c;
-  --bad: #c22c22;
+  /* the inks: the same in both themes, always carrying --on-pop text */
+  --volt: #c8f53b;
+  --hot: #ff5c93;
+  --sky: #62c4ff;
+  --tang: #ff8a3d;
+  --lilac: #b6a4ff;
+  --mint: #4fe0b0;
+  --on-pop: #121013;
+
+  /* surfaces, light: warm paper */
+  --frame: #e6dfd0;          /* tab strip */
+  --frame-hover: #d9d1c0;
+  --toolbar: #faf6ee;        /* toolbar and active tab */
+  --field: #ece5d7;          /* address bar */
+  --field-hover: #e4dccc;
+  --panel: #fffcf6;          /* popups and cards */
+  --panel-2: #f2ebdd;
+  --page: #f4efe6;           /* internal pages */
+  --ink: #121013;
+  --ink-2: #48433d;
+  --ink-3: #6a645b;
+  --edge: #121013;           /* outlines on popups and blocks */
+  --line: rgba(18, 16, 19, 0.12);
+  --line-2: rgba(18, 16, 19, 0.2);
+  --hover: rgba(18, 16, 19, 0.06);
+  --press: rgba(18, 16, 19, 0.11);
+  --badge: #5c564d;
+  --ok: #1d7a43;
+  --bad: #c42b2b;
   --warn: #8a5a00;
 
-  /* accent (default blue) */
-  --signal: #1a5fd6;
-  --signal-ink: #ffffff;
-  --signal-text: #1a5fd6;
-  --signal-d: #9cc0ff;
-  --signal-soft: color-mix(in srgb, var(--signal) 13%, transparent);
-  --ring: 0 0 0 2px var(--signal);
+  /* accent (default volt). --signal-text is the readable version on the page. */
+  --signal: var(--volt);
+  --signal-ink: var(--on-pop);
+  --signal-text: #4b6900;
+  --signal-d: var(--volt);
+  --signal-soft: color-mix(in srgb, var(--signal) 28%, transparent);
+  --ring: 0 0 0 2px var(--ink);
 
-  --r-sm: 4px;
-  --r: 8px;
-  --r-lg: 12px;
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 14px;
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
@@ -64,63 +75,73 @@
   --lcd-dim: var(--ink-3);
 }
 
-:root[data-signal="orange"] { --signal: #e8590c; --signal-ink: #ffffff; --signal-text: #c2410c; --signal-d: #ffa066; }
-:root[data-signal="green"] { --signal: #1e8e3e; --signal-ink: #ffffff; --signal-text: #18794e; --signal-d: #6dd58c; }
-:root[data-signal="teal"] { --signal: #0e8a99; --signal-ink: #ffffff; --signal-text: #00727f; --signal-d: #52cfdc; }
-:root[data-signal="pink"] { --signal: #d6336c; --signal-ink: #ffffff; --signal-text: #c2255c; --signal-d: #ff8ab0; }
-:root[data-signal="graphite"] { --signal: #50545e; --signal-ink: #ffffff; --signal-text: #3f434c; --signal-d: #c4c7cf; }
+:root[data-signal="hot"] { --signal: var(--hot); --signal-text: #c0144f; }
+:root[data-signal="sky"] { --signal: var(--sky); --signal-text: #00639e; }
+:root[data-signal="tang"] { --signal: var(--tang); --signal-text: #a84300; }
+:root[data-signal="lilac"] { --signal: var(--lilac); --signal-text: #5a3fd0; }
+:root[data-signal="mint"] { --signal: var(--mint); --signal-text: #00735a; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --frame: #141519;
-    --frame-hover: #1f2026;
-    --toolbar: #24262c;
-    --field: #17181c;
-    --field-hover: #1c1d22;
-    --panel: #292b31;
-    --panel-2: #31333a;
-    --page: #1c1d21;
-    --ink: #eceef2;
-    --ink-2: #b6b9c2;
-    --ink-3: #999ca6;
-    --line: rgba(255, 255, 255, 0.09);
-    --line-2: rgba(255, 255, 255, 0.16);
-    --hover: rgba(255, 255, 255, 0.07);
-    --press: rgba(255, 255, 255, 0.12);
-    --badge: #6c707b;
-    --ok: #5fd38a;
-    --bad: #ff7b72;
-    --warn: #f0c050;
-    --signal-text: var(--signal-d);
-    --ring: 0 0 0 2px var(--signal-d);
+    --frame: #0e0d0f;
+    --frame-hover: #1d1b1f;
+    --toolbar: #1c1a1e;
+    --field: #2a272c;
+    --field-hover: #322f35;
+    --panel: #1f1d22;
+    --panel-2: #2a272d;
+    --page: #121013;
+    --ink: #f4efe6;
+    --ink-2: #c9c2b6;
+    --ink-3: #a29b8f;
+    --edge: #3b373f;
+    --line: rgba(244, 239, 230, 0.1);
+    --line-2: rgba(244, 239, 230, 0.18);
+    --hover: rgba(244, 239, 230, 0.07);
+    --press: rgba(244, 239, 230, 0.12);
+    --badge: #6f695f;
+    --ok: #6fdc98;
+    --bad: #ff7d7d;
+    --warn: #f3c25a;
+    --signal-text: var(--signal);
+    --ring: 0 0 0 2px var(--signal);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --frame: #141519;
-  --frame-hover: #1f2026;
-  --toolbar: #24262c;
-  --field: #17181c;
-  --field-hover: #1c1d22;
-  --panel: #292b31;
-  --panel-2: #31333a;
-  --page: #1c1d21;
-  --ink: #eceef2;
-  --ink-2: #b6b9c2;
-  --ink-3: #999ca6;
-  --line: rgba(255, 255, 255, 0.09);
-  --line-2: rgba(255, 255, 255, 0.16);
-  --hover: rgba(255, 255, 255, 0.07);
-  --press: rgba(255, 255, 255, 0.12);
-  --badge: #6c707b;
-  --ok: #5fd38a;
-  --bad: #ff7b72;
-  --warn: #f0c050;
-  --signal-text: var(--signal-d);
-  --ring: 0 0 0 2px var(--signal-d);
+  --frame: #0e0d0f;
+  --frame-hover: #1d1b1f;
+  --toolbar: #1c1a1e;
+  --field: #2a272c;
+  --field-hover: #322f35;
+  --panel: #1f1d22;
+  --panel-2: #2a272d;
+  --page: #121013;
+  --ink: #f4efe6;
+  --ink-2: #c9c2b6;
+  --ink-3: #a29b8f;
+  --edge: #3b373f;
+  --line: rgba(244, 239, 230, 0.1);
+  --line-2: rgba(244, 239, 230, 0.18);
+  --hover: rgba(244, 239, 230, 0.07);
+  --press: rgba(244, 239, 230, 0.12);
+  --badge: #6f695f;
+  --ok: #6fdc98;
+  --bad: #ff7d7d;
+  --warn: #f3c25a;
+  --signal-text: var(--signal);
+  --ring: 0 0 0 2px var(--signal);
 }
+
+/* Place colours: a solid ink chip with an ink-black icon on it. */
+.ink-volt { --pop: var(--volt); }
+.ink-hot { --pop: var(--hot); }
+.ink-sky { --pop: var(--sky); }
+.ink-tang { --pop: var(--tang); }
+.ink-lilac { --pop: var(--lilac); }
+.ink-mint { --pop: var(--mint); }
 
 *,
 *::before,
@@ -159,7 +180,8 @@ button {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--signal) 30%, transparent);
+  background: var(--signal);
+  color: var(--on-pop);
 }
 
 input,
@@ -216,7 +238,7 @@ textarea {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--page);
   transition: transform 0.15s var(--ease);
 }
 
@@ -225,6 +247,7 @@ textarea {
 }
 
 .switch[aria-checked="true"]::after {
+  background: var(--on-pop);
   transform: translateX(16px);
 }
 
@@ -235,16 +258,18 @@ textarea {
 /* Buttons. */
 .btn {
   height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  background: var(--panel);
-  color: var(--signal-text);
+  padding: 0 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink);
   font-weight: 600;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
 .btn:hover {
-  background: var(--signal-soft);
+  background: var(--ink);
+  color: var(--page);
 }
 
 .btn.primary {
@@ -254,15 +279,18 @@ textarea {
 }
 
 .btn.primary:hover {
-  background: color-mix(in srgb, var(--signal) 88%, #000);
+  background: var(--ink);
+  color: var(--page);
 }
 
 .btn.danger {
+  border-color: var(--bad);
   color: var(--bad);
 }
 
 .btn.danger:hover {
-  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  background: var(--bad);
+  color: var(--page);
 }
 
 /* Counts roll per digit when they change. */

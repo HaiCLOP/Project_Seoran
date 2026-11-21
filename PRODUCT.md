@@ -39,8 +39,8 @@ All-day use on Windows 10 and 11, often in a maximized window beside games, code
 
 - Name: Seoran (working name).
 - The current diamond logo is not binding; a new mark may be designed.
-- The owner's personal site (haiclop.xyz) is a reference for energy and attitude only: its themes and elements must not be copied.
-- **Inspired by Brave, not a copy** (owner's choice, 2026-11-21, after rejecting two expressive directions): Chromium/Brave conventions and Brave's craft level are the bar, but Seoran keeps its own name, mark, accent colour, wording and new-tab layout. It never uses Brave's lion, name, orange brand mark, phrasing, Rewards/BAT or Wallet.
+- **Colour like haiclop.xyz** (owner's direction, 2026-11-21): the grey Brave-style UI read as boring and AI-made. Seoran takes the owner's site's energy: flat, saturated inks on near-black or paper, ink-black text on colour, heavy display type, and **no gradients** (they read as vibecoded). Its mascots, illustrations and hand-lettered notes stay haiclop's and are not reused.
+- **Familiar layout:** Chromium/Brave conventions for where things are, and Brave's craft level is the bar. Seoran never uses Brave's lion, name, orange brand mark, phrasing, Rewards/BAT or Wallet.
 
 ## Evidence on Hand
 

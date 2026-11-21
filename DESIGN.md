@@ -1,64 +1,85 @@
 # Seoran design
 
-Seoran's UI follows Chromium and Brave conventions so it feels familiar, and keeps its own identity in its mark, its accent colour, its voice, and a shield that shows what it blocked. Source of truth: `app/ui/seoran.css` (tokens) and the pages in `app/ui/`.
+**Riso pop.** Seoran keeps the Chromium layout people already know (tabs on top, a rounded address bar, a menu at the right). It prints that layout in flat, saturated inks on near-black night or warm paper, with ink-black text on every colour block. The energy comes from the owner's site, haiclop.xyz; the layout and parts are Seoran's own. Source of truth: `app/ui/seoran.css` (tokens) and the pages in `app/ui/`.
 
 ## Principles
 
-- **Familiar first.** Tabs, toolbar, menu and settings work the way Chromium users expect. Don't invent new controls for standard jobs.
-- **Inspired, not copied.** Never use Brave's lion, name, orange brand mark, wording ("Shields are UP"), Rewards/BAT or Wallet, or its new-tab layout (corner stats, clock).
-- **Privacy you can see.** The shield always shows real numbers: this page, since install, and which hosts were blocked. No estimates, no invented stats.
-- **Quiet by default.** Neutral surfaces. Colour is used for the accent and state only. No gradients, glows, tilted stickers or decorative motion (see Motion).
+- **Familiar layout, loud print.** Controls stay where Chromium users expect them; colour and type carry the personality.
+- **Flat ink only.** Colour comes in solid blocks. No gradients, glows, glass, blur or tinted-transparent "AI" washes. Text on a colour block is always ink black (`--on-pop`).
+- **Colour means something.** The accent marks what's live or chosen: the shield, the active tab, the selected row. The other inks mark places: site tiles and settings sections.
+- **Privacy you can see.** The shield shows real numbers and real blocked hosts. No estimates, no invented stats.
+- **Inspired, not copied.** Never use haiclop.xyz's mascots, illustrations or hand-lettered notes, or Brave's lion, name, wording, Rewards/BAT or Wallet.
 
-## Tokens
+## Inks
 
-| Token | Light | Dark | Use |
-| --- | --- | --- | --- |
-| `--frame` | `#e6e7eb` | `#141519` | Tab strip |
-| `--toolbar` | `#ffffff` | `#24262c` | Toolbar and active tab |
-| `--field` | `#eff0f3` | `#17181c` | Address bar |
-| `--panel` | `#ffffff` | `#292b31` | Popups and cards |
-| `--page` | `#f3f4f6` | `#1c1d21` | Internal page background |
-| `--ink` / `--ink-2` / `--ink-3` | `#1c1e24` / `#50545e` / `#686c77` | `#eceef2` / `#b6b9c2` / `#999ca6` | Text (all AA on their surfaces) |
-| `--line` / `--line-2` | 10% / 17% ink | 9% / 16% white | Hairlines |
+Same in both themes, always carrying `--on-pop` (`#121013`) text:
 
-Accent (`--signal`), picked in Settings > Look:
-
-| Name | Light | Dark text |
+| Ink | Hex | Default role |
 | --- | --- | --- |
-| Blue (default) | `#1a5fd6` | `#9cc0ff` |
-| Orange | `#e8590c` | `#ffa066` |
-| Green | `#1e8e3e` | `#6dd58c` |
-| Teal | `#0e8a99` | `#52cfdc` |
-| Pink | `#d6336c` | `#ff8ab0` |
-| Graphite | `#50545e` | `#c4c7cf` |
+| Volt | `#c8f53b` | Default accent; Shield section |
+| Hot | `#ff5c93` | Look section; logo |
+| Sky | `#62c4ff` | General section |
+| Tang | `#ff8a3d` | About section |
+| Lilac | `#b6a4ff` | Privacy section |
+| Mint | `#4fe0b0` | Accent option |
 
-The accent appears on switches, focus rings, selection, links, the loading spinner and the shield chip. Never on large surfaces.
+The accent (`--signal`) is one ink, picked in Settings > Look. On paper, accent-coloured *text* uses a deep version (`--signal-text`, for example volt text is `#4b6900`). On night it uses the ink itself.
 
-Shape: `--r-sm` 4px (selects), `--r` 8px (buttons, cards), `--r-lg` 12px (popups). The address bar and new-tab search box are fully rounded. Toolbar and tab buttons are circles.
+## Surfaces
 
-Type: Segoe UI Variable for all browser UI, so the frame feels native (13px; address bar 14px). Bricolage Grotesque (bundled in `app/ui/fonts`, SIL OFL, variable width and weight) is the display face, used only for large type on Seoran's own pages: the new-tab wordmark (650 weight, 92% width, -0.03em), settings headings and big counts.
+| Token | Paper (light) | Night (dark) | Use |
+| --- | --- | --- | --- |
+| `--frame` | `#e6dfd0` | `#0e0d0f` | Tab strip |
+| `--toolbar` | `#faf6ee` | `#1c1a1e` | Toolbar and active tab |
+| `--field` | `#ece5d7` | `#2a272c` | Address bar |
+| `--panel` / `--panel-2` | `#fffcf6` / `#f2ebdd` | `#1f1d22` / `#2a272d` | Popups and cards |
+| `--page` | `#f4efe6` | `#121013` | Internal pages |
+| `--ink` / `--ink-2` / `--ink-3` | `#121013` / `#48433d` / `#6a645b` | `#f4efe6` / `#c9c2b6` / `#a29b8f` | Text (all AA) |
+| `--edge` | `#121013` | `#3b373f` | 2px outlines on popups |
+
+Focus is a 2px ring: ink on paper, the accent at night. Text selection fills with the accent.
+
+Shape: pills for buttons, selects, chips and the address bar; 12px for popups (it matches the window region); 14–16px for cards and tiles.
+
+## Type
+
+- **Segoe UI Variable** for all browser UI, so the frame feels native (13px; the address bar is 14px).
+- **Bricolage Grotesque** (bundled in `app/ui/fonts`, SIL OFL, variable width and weight) for display type on Seoran's own pages, set heavy (750–800) and slightly condensed (82–92%). Used for the new-tab wordmark, settings headings, big counts, tile names, the shield count and the new-tab band.
 
 ## Components
 
-- **Tabs:** Chromium shape. The active tab has the toolbar colour, 8px top corners and curved feet into the toolbar. Inactive tabs are separated by 1px lines; on hover they get a rounded fill.
-- **Address bar:** site icon, URL, bookmark star, a divider, then the **shield chip**: the shield icon plus this page's blocked count on an accent-tinted pill. Focus draws a 2px accent ring around the bar only.
-- **Shield panel:** the site with its on/off switch in the header, the page count, the top blocked hosts with counts, one line of advice, then the global switch, the lifetime total, "Update lists" and "Shield settings".
-- **Menu:** a Chromium-style list with shortcuts right-aligned (`Ctrl+T` notation).
-- **Popups** are clipped by a native window region, so they have a hairline border and no outside shadow.
-- **New tab:** a large "Seoran." wordmark (accent full stop), a search box, up to 8 top sites (real favicons, letter fallback) on magnetic tiles, and a footer rail: the lifetime blocked count, a live ticker of recently blocked hosts, Shield settings and Customize. Behind it sits the field, a faint dot grid that leans toward the cursor and ripples once for each blocked request.
-- **Settings:** a left nav whose highlight pill slides to the section in view; sections are white cards of rows (label and description left, control right) under display-face headings.
+- **Tabs:** Chromium shape. The active tab has the toolbar colour, a 3px accent cap along its top edge and semibold title. Tabs that are asleep still show their real favicon (remembered in history); a tab with no icon gets a letter on an ink chip.
+- **Shield chip:** in the address bar. When the page has blocked something it prints solid in the accent with the count in ink.
+- **Shield panel:** the site and its switch; the page count on a solid accent block (a grey block when the shield is off for the site); the top blocked hosts with count pills; then the global switch, the lifetime total, "Update lists" and "Shield settings".
+- **Menus, suggestions, palette:** 2px outlined cards. The hovered or selected row fills with the accent, text in ink.
+- **Links** are ink with a 2px accent underline.
+- **Toasts** are inverted (ink background) with an accent action pill.
+- **New tab:**
+  - A huge "Seoran" wordmark in ink, printed over a hard accent offset, like a misregistered riso print.
+  - The search bar is the page's one inverted surface (chalk at night, ink on paper) with an accent offset.
+  - Top sites are solid ink tiles in rotation (volt, hot, sky, tang, lilac, mint) with the favicon on a chalk disc. They lift on hover and press on click.
+  - A full-width accent band at the bottom shows the lifetime blocked count, then scrolls the hosts most recently blocked (pauses on hover).
+- **Settings:**
+  - Each section has its own ink chip, both in the nav and beside the section heading.
+  - The nav highlight is an ink pill that slides to the section in view.
+  - The shield's lifetime count is printed on a volt block.
+  - The appearance control and accent picker are pills and ink swatches.
+- **DevTools:** neutral surfaces; a 3px accent underline on the open tool; the element picker fills with the accent when on.
 
 ## Motion
 
-Motion explains a change; it never decorates. The new tab is the one page allowed a show, and even there the motion is driven by real shield data. Easing is `cubic-bezier(0.2, 0, 0, 1)` throughout.
+Motion explains a change; it never decorates. Easing is `cubic-bezier(0.2, 0, 0, 1)` throughout.
 
-- Tabs grow in when opened (0.22s), collapse when closed (0.18s) and glide to their new slots on reorder (FLIP). While you drag a tab, the others slide aside to show where it will land.
-- Hovers and focus fade over 0.15s; toolbar buttons press in slightly.
-- Counts roll digit by digit when they change.
-- New tab: one orchestrated entrance (the wordmark rises out of its line, then search, sites and footer follow), magnetic tiles, the cursor-reactive field with shield ripples, and the ticker, which pauses on hover.
-- Popups open instantly like native menus; they're clipped by a window region, so fades would flash.
-- `prefers-reduced-motion` turns all of it off: no entrance, no field motion, no ticker scroll.
+- **Tabs:** they grow in when opened (0.22s), collapse when closed (0.18s) and glide to their new slots on reorder (FLIP). While you drag a tab, the others slide aside.
+- **Small transitions:** hovers fade over 0.15s, and toolbar buttons press in slightly.
+- **Counts:** they roll digit by digit when they change.
+- **New tab:**
+  - One entrance: the wordmark rises out of its line, then search, tiles and the band follow.
+  - Tiles lift and press.
+  - The band's count bumps each time the shield blocks something.
+- **Popups** open instantly; they're clipped by a window region, so fades would flash.
+- **Reduced motion:** `prefers-reduced-motion` turns all of it off.
 
 ## Mark
 
-A circle split by an S-curve, blue `#1a5fd6` and amber `#f5a623`, turned 45° (`app/ui/logo.svg`, window icon drawn in `main.rs`). It's a placeholder until the team has a designed logo.
+A circle split by an S-curve, hot pink `#ff5c93` and volt `#c8f53b`, turned 45° with a thin ink outline (`app/ui/logo.svg`; the window icon is drawn in `main.rs`). It's a placeholder until the team has a designed logo.

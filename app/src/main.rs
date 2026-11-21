@@ -183,7 +183,7 @@ fn top_blocked_hosts(tab: &Tab) -> Vec<(String, u32)> {
     counts
 }
 
-/// The Seoran mark (a circle split by an S-curve, blue and amber, turned
+/// The Seoran mark (a circle split by an S-curve, hot pink and volt, turned
 /// 45 degrees), drawn in code at 64x64 so the window icon needs no file.
 fn app_icon() -> Option<Icon> {
     let size = 64u32;
@@ -198,12 +198,12 @@ fn app_icon() -> Option<Icon> {
             let pixel = if ux.hypot(uy) > 14.0 {
                 [0, 0, 0, 0]
             } else {
-                // Blue: the left half minus the top lobe, plus the bottom lobe
+                // Pink: the left half minus the top lobe, plus the bottom lobe
                 // (the same S-curve the SVG path draws).
                 let top_lobe = ux.hypot(uy + 7.0) <= 7.0;
                 let bottom_lobe = ux.hypot(uy - 7.0) <= 7.0;
-                let blue = (ux < 0.0 && !top_lobe) || (ux >= 0.0 && bottom_lobe);
-                if blue { [26, 95, 214, 255] } else { [245, 166, 35, 255] }
+                let pink = (ux < 0.0 && !top_lobe) || (ux >= 0.0 && bottom_lobe);
+                if pink { [255, 92, 147, 255] } else { [200, 245, 59, 255] }
             };
             rgba.extend_from_slice(&pixel);
         }
@@ -603,7 +603,12 @@ impl Browser {
                 "url": nav::display_url(&t.url),
                 "loading": t.loading,
                 "blocked": t.hooks.blocked.get(),
-                "favicon": t.favicon,
+                // A sleeping tab has no page to ask, so use the icon history remembers.
+                "favicon": if t.favicon.is_empty() {
+                    self.store.history.get(&t.url).map(|h| h.favicon.as_str()).unwrap_or("")
+                } else {
+                    t.favicon.as_str()
+                },
                 "internal": nav::is_internal(&t.url),
                 "sleeping": t.webview.is_none(),
             })).collect::<Vec<_>>(),

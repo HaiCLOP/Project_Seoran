@@ -10,97 +10,119 @@
   html, body { min-height: 100%; background: var(--page); }
   .wrap {
     display: grid;
-    grid-template-columns: 220px minmax(0, 680px);
-    gap: 32px;
+    grid-template-columns: 228px minmax(0, 700px);
+    gap: 40px;
     justify-content: center;
-    padding: 28px 32px 80px;
+    padding: 32px 32px 96px;
   }
-  nav { position: sticky; top: 28px; align-self: start; }
+  nav { position: sticky; top: 32px; align-self: start; }
+  nav h1 { margin: 0 0 22px 6px; font-family: var(--font-display); font-size: 34px; font-weight: 800; font-stretch: 82%; letter-spacing: -0.035em; line-height: 1; }
   .nav-links { position: relative; }
-  /* The highlight slides between sections instead of jumping. */
+  /* The highlight is an ink pill that slides between sections. */
   .nav-pill {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
-    height: 38px;
-    border-radius: 19px;
-    background: var(--signal-soft);
+    height: 42px;
+    border-radius: 21px;
+    background: var(--ink);
     transition: transform 0.3s var(--ease);
     pointer-events: none;
   }
-  nav h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 18px 12px; font-family: var(--font-display); font-size: 26px; font-weight: 700; font-stretch: 85%; letter-spacing: -0.03em; }
-  nav h1 img { width: 22px; height: 22px; }
   nav a {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 14px;
-    height: 38px;
-    padding: 0 12px;
-    border-radius: 19px;
-    position: relative;
+    gap: 12px;
+    height: 42px;
+    padding: 0 8px;
+    border-radius: 21px;
     color: var(--ink);
+    font-weight: 600;
     text-decoration: none;
     transition: color 0.2s var(--ease), background-color 0.15s var(--ease);
   }
   nav a:hover { background: var(--hover); }
-  nav a.on { color: var(--signal-text); font-weight: 600; }
+  nav a.on { color: var(--page); }
   nav a.on:hover { background: transparent; }
-  nav a .ic { color: var(--ink-2); }
-  nav a.on .ic { color: var(--signal-text); }
-  section { margin-bottom: 26px; scroll-margin-top: 24px; }
-  section h2 { margin: 0 0 12px 4px; font-family: var(--font-display); font-size: 19px; font-weight: 650; font-stretch: 90%; letter-spacing: -0.015em; }
-  .card { background: var(--panel); border-radius: var(--r); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.06); }
+  /* Each section has its own ink: a solid chip with a black icon. */
+  .chip-ic {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--pop);
+    color: var(--on-pop);
+  }
+  section { margin-bottom: 36px; scroll-margin-top: 28px; }
+  section h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 14px 2px; font-family: var(--font-display); font-size: 28px; font-weight: 800; font-stretch: 85%; letter-spacing: -0.03em; line-height: 1.1; }
+  .card { background: var(--panel); border-radius: 14px; border: 1.5px solid var(--line-2); overflow: hidden; }
   .row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    min-height: 56px;
-    padding: 10px 20px;
+    min-height: 60px;
+    padding: 12px 20px;
   }
-  .row + .row { border-top: 1px solid var(--line); }
-  .row .t { font-size: 13.5px; }
-  .row .d { color: var(--ink-2); margin-top: 2px; max-width: 52ch; }
+  .row + .row { border-top: 1.5px solid var(--line); }
+  .row .t { font-size: 13.5px; font-weight: 600; }
+  .row .d { color: var(--ink-2); margin-top: 3px; max-width: 52ch; }
   select {
-    height: 32px;
-    padding: 0 28px 0 10px;
-    border: 1px solid var(--line-2);
-    border-radius: var(--r-sm);
+    height: 34px;
+    padding: 0 28px 0 12px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 17px;
     background: var(--panel);
+    font-weight: 600;
   }
-  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
-  .seg button { height: 30px; padding: 0 14px; border: 0; background: transparent; color: var(--ink-2); }
-  .seg button + button { border-left: 1px solid var(--line-2); }
-  .seg button.on { background: var(--signal-soft); color: var(--signal-text); font-weight: 600; }
+  select:hover { border-color: var(--ink); }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 19px; background: var(--panel-2); }
+  .seg button { height: 30px; padding: 0 14px; border: 0; border-radius: 15px; background: transparent; color: var(--ink-2); font-weight: 600; transition: background-color 0.15s var(--ease), color 0.15s var(--ease); }
+  .seg button:hover { color: var(--ink); }
+  .seg button.on { background: var(--ink); color: var(--page); }
   .signals { display: flex; gap: 10px; }
   .sig {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border: 0;
     border-radius: 50%;
-    background: var(--sw);
-    color: #fff;
+    background: var(--pop);
+    color: var(--on-pop);
     display: grid;
     place-items: center;
+    transition: transform 0.15s var(--ease);
   }
-  .sig[aria-checked="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--sw); }
-  .lists { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; color: var(--ink-2); font-size: 12px; }
+  .sig:hover { transform: scale(1.1); }
+  .sig[aria-checked="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); }
+  .lists { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .lists span { padding: 2px 9px; border-radius: 11px; background: var(--panel-2); color: var(--ink-2); font-size: 12px; font-weight: 600; }
   .allowed { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    height: 26px;
-    padding: 0 4px 0 10px;
-    border-radius: 13px;
+    height: 28px;
+    padding: 0 4px 0 12px;
+    border-radius: 14px;
     background: var(--panel-2);
     font-size: 12px;
+    font-weight: 600;
   }
-  .chip button { width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--ink-3); }
-  .chip button:hover { background: var(--press); color: var(--ink); }
-  .total .big { font-family: var(--font-display); font-size: 34px; font-weight: 700; font-stretch: 85%; letter-spacing: -0.02em; }
-  .total .silk { display: block; margin-top: 2px; color: var(--ink-2); }
+  .chip button { width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--ink-2); }
+  .chip button:hover { background: var(--ink); color: var(--page); }
+  /* The shield's lifetime count, printed on the shield's own ink. */
+  .row.total-row { background: var(--volt); color: var(--on-pop); padding-top: 18px; padding-bottom: 18px; }
+  .total .big { display: block; font-family: var(--font-display); font-size: 54px; font-weight: 800; font-stretch: 82%; letter-spacing: -0.04em; line-height: 0.9; }
+  .total .silk { display: block; margin-top: 6px; font-weight: 600; }
+  .total-row .muted { color: var(--on-pop); font-weight: 600; }
+  .total-row .switch { background: rgba(18, 16, 19, 0.3); }
+  .total-row .switch[aria-checked="true"] { background: var(--on-pop); }
+  .total-row .switch[aria-checked="true"]::after { background: var(--volt); }
+  .total-row .switch::after { background: var(--volt); }
   code { font-family: var(--mono); font-size: 12px; color: var(--ink-2); word-break: break-all; }
   .muted { color: var(--ink-2); }
   @media (max-width: 760px) {
@@ -112,13 +134,13 @@
 <body>
 <div class="wrap">
   <nav aria-label="Settings sections">
-    <h1><img src="/logo.svg" alt="">Settings</h1>
+    <h1>Settings</h1>
     <div class="nav-links"><span class="nav-pill" id="nav-pill" aria-hidden="true"></span>
-    <a href="#look" class="on" data-ic="swatch">Look</a>
-    <a href="#general" data-ic="settings">General</a>
-    <a href="#shield" data-ic="shield">Shield</a>
-    <a href="#privacy" data-ic="lock">Privacy</a>
-    <a href="#about" data-ic="globe">About</a>
+    <a href="#look" class="on" data-ic="swatch" data-ink="hot">Look</a>
+    <a href="#general" data-ic="settings" data-ink="sky">General</a>
+    <a href="#shield" data-ic="shield" data-ink="volt">Shield</a>
+    <a href="#privacy" data-ic="lock" data-ink="lilac">Privacy</a>
+    <a href="#about" data-ic="globe" data-ink="tang">About</a>
     </div>
   </nav>
   <div id="content">
@@ -126,7 +148,7 @@
       <h2>Look</h2>
       <div class="card">
         <div class="row">
-          <div><div class="t">Accent colour</div><div class="d">Used for switches, focus and links.</div></div>
+          <div><div class="t">Accent colour</div><div class="d">The ink for the shield, the active tab and selections.</div></div>
           <div class="signals" id="signals" role="radiogroup" aria-label="Accent colour"></div>
         </div>
         <div class="row">
@@ -167,8 +189,8 @@
     <section id="shield">
       <h2>Shield</h2>
       <div class="card">
-        <div class="row">
-          <div class="total"><span class="big" id="total"></span><span class="silk">trackers &amp; ads blocked since install</span></div>
+        <div class="row total-row">
+          <div class="total"><span class="big" id="total"></span><span class="silk">ads and trackers blocked since you installed Seoran</span></div>
           <div style="display:flex;align-items:center;gap:10px"><span class="muted" id="shield-word">On for every site</span><button class="switch" id="shields" role="switch" aria-labelledby="shield-word"></button></div>
         </div>
         <div class="row">
@@ -214,22 +236,27 @@
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const set = (key, value) => seoran.send({ t: 'setting', key, value });
-  const SIGNALS = { blue: ['Blue', '#1a5fd6'], orange: ['Orange', '#e8590c'], green: ['Green', '#1e8e3e'], teal: ['Teal', '#0e8a99'], pink: ['Pink', '#d6336c'], graphite: ['Graphite', '#50545e'] };
+  const SIGNALS = { volt: 'Volt', hot: 'Hot pink', sky: 'Sky', tang: 'Tangerine', lilac: 'Lilac', mint: 'Mint' };
 
-  for (const a of document.querySelectorAll('nav a')) a.insertAdjacentHTML('afterbegin', icon(a.dataset.ic));
+  // Each section's ink chip, in the nav and beside its heading.
+  const chip = (a, size) => `<span class="chip-ic ink-${a.dataset.ink}" aria-hidden="true">${icon(a.dataset.ic, size)}</span>`;
+  for (const a of document.querySelectorAll('nav a')) {
+    a.insertAdjacentHTML('afterbegin', chip(a, 15));
+    document.querySelector(`${a.hash} h2`).insertAdjacentHTML('afterbegin', chip(a, 16));
+  }
 
   window.__seoranLook = ({ theme, plastic }) => {
     const r = document.documentElement;
     if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
-    if (plastic && plastic !== 'blue') r.dataset.signal = plastic; else delete r.dataset.signal;
+    if (plastic && plastic !== 'volt') r.dataset.signal = plastic; else delete r.dataset.signal;
   };
 
   function render(d) {
     const s = d.settings;
     __seoranLook(s);
     $('#signals').innerHTML = (d.plastics || Object.keys(SIGNALS)).map((id) => {
-      const [name, hex] = SIGNALS[id] || [id, '#888'];
-      return `<button class="sig" role="radio" data-signal="${id}" aria-checked="${id === s.plastic}" style="--sw:${hex}" title="${name}" aria-label="${name}">${id === s.plastic ? icon('check', 14) : ''}</button>`;
+      const name = SIGNALS[id] || id;
+      return `<button class="sig ink-${id}" role="radio" data-signal="${id}" aria-checked="${id === s.plastic}" title="${name}" aria-label="${name}">${id === s.plastic ? icon('check', 15) : ''}</button>`;
     }).join('');
     $('#engine').innerHTML = d.engines.map((e) => `<option value="${esc(e.id)}" ${e.id === s.search_engine ? 'selected' : ''}>${esc(e.name)}</option>`).join('');
     for (const b of document.querySelectorAll('#theme button')) {
