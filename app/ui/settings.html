@@ -16,7 +16,20 @@
     padding: 28px 32px 80px;
   }
   nav { position: sticky; top: 28px; align-self: start; }
-  nav h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 16px 12px; font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .nav-links { position: relative; }
+  /* The highlight slides between sections instead of jumping. */
+  .nav-pill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 38px;
+    border-radius: 19px;
+    background: var(--signal-soft);
+    transition: transform 0.3s var(--ease);
+    pointer-events: none;
+  }
+  nav h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 18px 12px; font-family: var(--font-display); font-size: 26px; font-weight: 700; font-stretch: 85%; letter-spacing: -0.03em; }
   nav h1 img { width: 22px; height: 22px; }
   nav a {
     display: flex;
@@ -25,15 +38,18 @@
     height: 38px;
     padding: 0 12px;
     border-radius: 19px;
+    position: relative;
     color: var(--ink);
     text-decoration: none;
+    transition: color 0.2s var(--ease), background-color 0.15s var(--ease);
   }
   nav a:hover { background: var(--hover); }
-  nav a.on { background: var(--signal-soft); color: var(--signal-text); font-weight: 600; }
+  nav a.on { color: var(--signal-text); font-weight: 600; }
+  nav a.on:hover { background: transparent; }
   nav a .ic { color: var(--ink-2); }
   nav a.on .ic { color: var(--signal-text); }
   section { margin-bottom: 26px; scroll-margin-top: 24px; }
-  section h2 { margin: 0 0 10px 4px; font-size: 15px; font-weight: 600; }
+  section h2 { margin: 0 0 12px 4px; font-family: var(--font-display); font-size: 19px; font-weight: 650; font-stretch: 90%; letter-spacing: -0.015em; }
   .card { background: var(--panel); border-radius: var(--r); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.06); }
   .row {
     display: flex;
@@ -83,7 +99,7 @@
   }
   .chip button { width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--ink-3); }
   .chip button:hover { background: var(--press); color: var(--ink); }
-  .total .big { font-family: var(--font-display); font-size: 28px; font-weight: 600; }
+  .total .big { font-family: var(--font-display); font-size: 34px; font-weight: 700; font-stretch: 85%; letter-spacing: -0.02em; }
   .total .silk { display: block; margin-top: 2px; color: var(--ink-2); }
   code { font-family: var(--mono); font-size: 12px; color: var(--ink-2); word-break: break-all; }
   .muted { color: var(--ink-2); }
@@ -97,11 +113,13 @@
 <div class="wrap">
   <nav aria-label="Settings sections">
     <h1><img src="/logo.svg" alt="">Settings</h1>
+    <div class="nav-links"><span class="nav-pill" id="nav-pill" aria-hidden="true"></span>
     <a href="#look" class="on" data-ic="swatch">Look</a>
     <a href="#general" data-ic="settings">General</a>
     <a href="#shield" data-ic="shield">Shield</a>
     <a href="#privacy" data-ic="lock">Privacy</a>
     <a href="#about" data-ic="globe">About</a>
+    </div>
   </nav>
   <div id="content">
     <section id="look">
@@ -256,9 +274,13 @@
     for (const s of sections) if (s.getBoundingClientRect().top <= 120) cur = s;
     if (innerHeight + scrollY >= document.body.scrollHeight - 4) cur = sections[sections.length - 1];
     links.forEach((a) => a.classList.toggle('on', a.hash === `#${cur.id}`));
+    const on = links.find((a) => a.classList.contains('on'));
+    if (on) $('#nav-pill').style.transform = `translateY(${on.offsetTop}px)`;
   };
   addEventListener('scroll', spy, { passive: true });
 
+  // Clicking a section scrolls smoothly; the spy moves the pill.
+  for (const a of links) a.addEventListener('click', (e) => { e.preventDefault(); document.querySelector(a.hash).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
   window.__seoranReceive = (msg) => { if (msg.t === 'data') { render(msg.data); spy(); } };
   if (window.seoran) seoran.send({ t: 'hello' });
 </script>

@@ -2,6 +2,14 @@
    Neutral frame and toolbar, a rounded address bar, 12px popups, and one
    accent colour the user picks. */
 
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/fonts/bricolage.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
 
@@ -39,7 +47,7 @@
   --r-lg: 12px;
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
 
   /* aliases older stylesheets still read */

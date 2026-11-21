@@ -7,7 +7,7 @@ Seoran's UI follows Chromium and Brave conventions so it feels familiar, and kee
 - **Familiar first.** Tabs, toolbar, menu and settings work the way Chromium users expect. Don't invent new controls for standard jobs.
 - **Inspired, not copied.** Never use Brave's lion, name, orange brand mark, wording ("Shields are UP"), Rewards/BAT or Wallet, or its new-tab layout (corner stats, clock).
 - **Privacy you can see.** The shield always shows real numbers: this page, since install, and which hosts were blocked. No estimates, no invented stats.
-- **Quiet by default.** Neutral surfaces. Colour is used for the accent and state only. No gradients, glows, tilted stickers or decorative motion.
+- **Quiet by default.** Neutral surfaces. Colour is used for the accent and state only. No gradients, glows, tilted stickers or decorative motion (see Motion).
 
 ## Tokens
 
@@ -36,7 +36,7 @@ The accent appears on switches, focus rings, selection, links, the loading spinn
 
 Shape: `--r-sm` 4px (selects), `--r` 8px (buttons, cards), `--r-lg` 12px (popups). The address bar and new-tab search box are fully rounded. Toolbar and tab buttons are circles.
 
-Type: Segoe UI Variable (Text for UI, Display for large numbers and the new-tab name). UI text is 13px; the address bar is 14px.
+Type: Segoe UI Variable for all browser UI, so the frame feels native (13px; address bar 14px). Bricolage Grotesque (bundled in `app/ui/fonts`, SIL OFL, variable width and weight) is the display face, used only for large type on Seoran's own pages: the new-tab wordmark (650 weight, 92% width, -0.03em), settings headings and big counts.
 
 ## Components
 
@@ -45,12 +45,19 @@ Type: Segoe UI Variable (Text for UI, Display for large numbers and the new-tab 
 - **Shield panel:** the site with its on/off switch in the header, the page count, the top blocked hosts with counts, one line of advice, then the global switch, the lifetime total, "Update lists" and "Shield settings".
 - **Menu:** a Chromium-style list with shortcuts right-aligned (`Ctrl+T` notation).
 - **Popups** are clipped by a native window region, so they have a hairline border and no outside shadow.
-- **New tab:** the Seoran mark and name, a search box, up to 8 top sites (real favicons, letter fallback) and one line at the bottom with the lifetime blocked count. Plain background that follows the theme.
-- **Settings:** a left nav with pill highlights; sections are white cards of rows (label and description left, control right).
+- **New tab:** a large "Seoran." wordmark (accent full stop), a search box, up to 8 top sites (real favicons, letter fallback) on magnetic tiles, and a footer rail: the lifetime blocked count, a live ticker of recently blocked hosts, Shield settings and Customize. Behind it sits the field, a faint dot grid that leans toward the cursor and ripples once for each blocked request.
+- **Settings:** a left nav whose highlight pill slides to the section in view; sections are white cards of rows (label and description left, control right) under display-face headings.
 
 ## Motion
 
-Only functional motion: a 0.15s ease on switches and hovers, a rolling count when a number changes, and the tab loading spinner. `prefers-reduced-motion` turns all of it off.
+Motion explains a change; it never decorates. The new tab is the one page allowed a show, and even there the motion is driven by real shield data. Easing is `cubic-bezier(0.2, 0, 0, 1)` throughout.
+
+- Tabs grow in when opened (0.22s), collapse when closed (0.18s) and glide to their new slots on reorder (FLIP). While you drag a tab, the others slide aside to show where it will land.
+- Hovers and focus fade over 0.15s; toolbar buttons press in slightly.
+- Counts roll digit by digit when they change.
+- New tab: one orchestrated entrance (the wordmark rises out of its line, then search, sites and footer follow), magnetic tiles, the cursor-reactive field with shield ripples, and the ticker, which pauses on hover.
+- Popups open instantly like native menus; they're clipped by a window region, so fades would flash.
+- `prefers-reduced-motion` turns all of it off: no entrance, no field motion, no ticker scroll.
 
 ## Mark
 

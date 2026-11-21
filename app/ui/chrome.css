@@ -77,7 +77,9 @@ body {
   align-items: center;
   gap: 8px;
   width: 240px;
+  max-width: 240px;
   min-width: 44px;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
   height: 34px;
   flex: 0 1 240px;
   padding: 0 6px 0 12px;
@@ -133,6 +135,36 @@ body {
 .tab.active::after {
   right: -8px;
   background: radial-gradient(circle at 100% 0, transparent 7.5px, var(--toolbar) 8px);
+}
+
+/* A new tab grows in; a closed one collapses and its neighbours close up. */
+.tab.opening {
+  animation: tab-open 0.22s var(--ease);
+}
+
+.tab.closing {
+  pointer-events: none;
+  animation: tab-close 0.18s var(--ease) forwards;
+}
+
+@keyframes tab-open {
+  from {
+    max-width: 0;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes tab-close {
+  to {
+    max-width: 0;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+  }
 }
 
 .tab.dragging {
@@ -284,6 +316,7 @@ body {
 
 /* Round toolbar buttons, Chromium style. */
 .tbtn {
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.1s var(--ease);
   display: grid;
   place-items: center;
   width: 32px;
@@ -302,6 +335,7 @@ body {
 
 .tbtn:active:not(:disabled) {
   background: var(--press);
+  transform: scale(0.94);
 }
 
 .tbtn:disabled {
@@ -324,6 +358,7 @@ body {
   padding: 0 4px 0 4px;
   border-radius: 17px;
   background: var(--field);
+  transition: background-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
 
 #omnibox:hover {
@@ -378,6 +413,7 @@ body {
 
 /* Buttons inside the address bar. */
 .obtn {
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
   position: relative;
   display: grid;
   place-items: center;
@@ -469,6 +505,7 @@ body {
 }
 
 .sg {
+  transition: background-color 0.1s var(--ease);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -696,6 +733,7 @@ body {
 }
 
 .mi {
+  transition: background-color 0.1s var(--ease);
   display: flex;
   align-items: center;
   gap: 12px;

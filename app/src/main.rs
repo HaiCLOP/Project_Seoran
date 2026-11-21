@@ -137,6 +137,8 @@ struct Browser {
     last_flush: Instant,
     /// Lifetime blocked count last sent to open new tab pages.
     pushed_total: u64,
+    /// Hosts the shield blocked most recently, newest first (for the new tab).
+    recent_hosts: VecDeque<String>,
     chrome_ready: bool,
     last_maintenance: Instant,
 }
@@ -286,6 +288,7 @@ impl Browser {
             dirty: true,
             last_flush: Instant::now(),
             pushed_total: 0,
+            recent_hosts: VecDeque::new(),
             chrome_ready: false,
             last_maintenance: Instant::now(),
         };
@@ -646,7 +649,7 @@ impl Browser {
         let total = self.shield.borrow().blocked_total();
         if total != self.pushed_total {
             self.pushed_total = total;
-            let js = format!("window.__seoranReceive && __seoranReceive({})", json!({ "t": "total", "n": total }));
+            let js = format!("window.__seoranReceive && __seoranReceive({})", json!({ "t": "total", "n": total, "recent": self.recent_hosts }));
             for t in &self.tabs {
                 if let (Some("newtab"), Some(wv)) = (nav::internal_page(&t.url), &t.webview) {
                     let _ = wv.evaluate_script(&js);
@@ -1039,6 +1042,7 @@ impl Browser {
                     "favicon": h.favicon,
                 })).collect::<Vec<_>>(),
                 "lists": shield.sources().len(),
+                "recent": self.recent_hosts,
             }),
             "settings" => json!({
                 "theme": s.theme, "plastic": s.plastic, "plastics": store::PLASTICS,
@@ -1121,7 +1125,21 @@ impl Browser {
                     self.dirty = true;
                 }
             }
-            UserEvent::Blocked(_) => self.dirty = true,
+            UserEvent::Blocked(tab) => {
+                if let Some(i) = self.index_of(tab) {
+                    let last = self.tabs[i].hooks.blocked_log.borrow().back().map(|b| b.url.clone());
+                    if let Some(url) = last {
+                        let host = url.split_once("://").map(|x| x.1).unwrap_or(&url);
+                        let host = host.split(['/', '?', '#', ':']).next().unwrap_or("").to_owned();
+                        if !host.is_empty() {
+                            self.recent_hosts.retain(|h| *h != host);
+                            self.recent_hosts.push_front(host);
+                            self.recent_hosts.truncate(24);
+                        }
+                    }
+                }
+                self.dirty = true;
+            }
             UserEvent::OpenTab { url, background } => self.open_tab(&url, !background),
             UserEvent::Filters(c) => {
                 // Lists update silently in the background; settings shows them.

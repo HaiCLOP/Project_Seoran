@@ -12,6 +12,10 @@ const JS: &str = "text/javascript; charset=utf-8";
 const SVG: &str = "image/svg+xml";
 
 pub fn asset(page: &str, path: &str) -> Option<(&'static str, &'static [u8])> {
+    if path == "/fonts/bricolage.woff2" {
+        // Bricolage Grotesque, SIL Open Font License 1.1 (ui/fonts/BricolageGrotesque-OFL.txt).
+        return Some(("font/woff2", include_bytes!("../ui/fonts/Bricolage.woff2")));
+    }
     let found: (&str, &str) = match (page, path) {
         (_, "/seoran.css") => (CSS, include_str!("../ui/seoran.css")),
         (_, "/icons.js") => (JS, include_str!("../ui/icons.js")),

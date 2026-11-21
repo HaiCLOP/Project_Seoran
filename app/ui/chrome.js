@@ -76,9 +76,22 @@ function favicon(t) {
 }
 window.__mono = monogram;
 
+// Tabs animate like a real tab strip: new tabs grow in, closed tabs
+// collapse, and when the order changes every tab glides to its new slot
+// (FLIP: measure, reorder, invert, play).
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let tabsBooted = false;
+let dropPending = false;
+
 function renderTabs() {
   const box = $('#tabs');
+  const animate = tabsBooted && !reduceMotion.matches;
+  const first = new Map();
+  for (const [id, el] of tabEls) first.set(id, el.getBoundingClientRect().left);
+
   const seen = new Set();
+  const order = [];
+  let structural = dropPending;
   for (const t of S.tabs) {
     seen.add(t.id);
     let el = tabEls.get(t.id);
@@ -90,6 +103,11 @@ function renderTabs() {
       el.innerHTML = '<span class="fav-slot"></span><span class="title"></span><button class="close" tabindex="-1" aria-label="Close tab"></button>';
       el.querySelector('.close').innerHTML = icon('x', 14);
       tabEls.set(t.id, el);
+      structural = true;
+      if (animate) {
+        el.classList.add('opening');
+        el.addEventListener('animationend', () => el.classList.remove('opening'), { once: true });
+      }
     }
     const favKey = `${t.internal}|${t.favicon}|${t.url}`;
     if (el.dataset.fav !== favKey) {
@@ -102,11 +120,50 @@ function renderTabs() {
     el.classList.toggle('loading', t.loading && !t.sleeping);
     el.classList.toggle('sleeping', t.sleeping && t.id !== S.active);
     el.setAttribute('aria-selected', t.id === S.active);
-    box.appendChild(el);
+    order.push(el);
   }
+
   for (const [id, el] of tabEls) {
-    if (!seen.has(id)) { el.remove(); tabEls.delete(id); }
+    if (seen.has(id)) continue;
+    tabEls.delete(id);
+    structural = true;
+    if (!animate) { el.remove(); continue; }
+    el.classList.add('closing');
+    el.setAttribute('aria-hidden', 'true');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 400);
   }
+
+  const live = [...box.children].filter((el) => !el.classList.contains('closing'));
+  const sameOrder = live.length === order.length && live.every((el, i) => el === order[i]);
+  if (!sameOrder) {
+    // A reorder: drop any collapsing tab at once so nothing jumps.
+    for (const el of box.querySelectorAll('.tab.closing')) el.remove();
+    for (const el of order) box.appendChild(el);
+    structural = true;
+  }
+
+  if (structural) {
+    dropPending = false;
+    for (const el of tabEls.values()) {
+      el.style.transition = 'none';
+      el.style.transform = '';
+    }
+    if (animate) {
+      for (const [id, el] of tabEls) {
+        const was = first.get(id);
+        if (was === undefined) continue;
+        const dx = was - el.getBoundingClientRect().left;
+        if (Math.abs(dx) < 1) continue;
+        el.style.transform = `translateX(${dx}px)`;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          el.style.transition = 'transform 0.22s var(--ease)';
+          el.style.transform = '';
+        }));
+      }
+    }
+  }
+  tabsBooted = true;
   requestAnimationFrame(fitTabs);
 }
 
@@ -308,31 +365,62 @@ $('#tabs').addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
   const id = Number(tab.dataset.id);
   if (id !== S.active) send({ t: 'activate', id });
-  drag = { id, el: tab, x0: e.clientX, moved: false, pointer: e.pointerId };
+  const tabsNow = [...$('#tabs').children].filter((el) => !el.classList.contains('closing'));
+  drag = {
+    id,
+    el: tab,
+    x0: e.clientX,
+    moved: false,
+    from: tabsNow.indexOf(tab),
+    to: tabsNow.indexOf(tab),
+    tabs: tabsNow,
+    // Slot centres before anything moves.
+    centres: tabsNow.map((el) => el.getBoundingClientRect().left + el.offsetWidth / 2),
+  };
   tab.setPointerCapture(e.pointerId);
 });
 
+// While dragging, the other tabs slide aside to show where it will land.
 $('#tabs').addEventListener('pointermove', (e) => {
   if (!drag) return;
   const dx = e.clientX - drag.x0;
   if (!drag.moved && Math.abs(dx) < 5) return;
   drag.moved = true;
   drag.el.classList.add('dragging');
+  drag.el.style.transition = 'none';
   drag.el.style.transform = `translateX(${dx}px)`;
+  const mid = drag.centres[drag.from] + dx;
+  let to = drag.centres.findIndex((c) => mid < c);
+  if (to === -1) to = drag.centres.length - 1;
+  else if (to > drag.from) to -= 1;
+  drag.to = to;
+  const w = drag.el.offsetWidth;
+  drag.tabs.forEach((el, i) => {
+    if (el === drag.el) return;
+    let shift = 0;
+    if (drag.from < to && i > drag.from && i <= to) shift = -w;
+    if (drag.from > to && i >= to && i < drag.from) shift = w;
+    el.style.transition = 'transform 0.18s var(--ease)';
+    el.style.transform = shift ? `translateX(${shift}px)` : '';
+  });
 });
 
-$('#tabs').addEventListener('pointerup', (e) => {
+$('#tabs').addEventListener('pointerup', () => {
   if (!drag) return;
   const d = drag;
   drag = null;
   if (!d.moved) return;
-  const mid = d.el.getBoundingClientRect().left + d.el.offsetWidth / 2;
-  const others = [...$('#tabs').children].filter((el) => el !== d.el);
-  let to = others.findIndex((el) => mid < el.getBoundingClientRect().left + el.offsetWidth / 2);
-  if (to === -1) to = others.length;
   d.el.classList.remove('dragging');
-  d.el.style.transform = '';
-  send({ t: 'moveTab', id: d.id, to });
+  if (d.to === d.from) {
+    for (const el of d.tabs) {
+      el.style.transition = 'transform 0.18s var(--ease)';
+      el.style.transform = '';
+    }
+    return;
+  }
+  // Leave everything where it is; the next render glides tabs into place.
+  dropPending = true;
+  send({ t: 'moveTab', id: d.id, to: d.to });
 });
 
 $('#tabs').addEventListener('auxclick', (e) => {
