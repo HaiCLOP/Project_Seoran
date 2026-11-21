@@ -38,32 +38,18 @@ code,
 }
 
 /* ---- header ---------------------------------------------------------------- */
-/* The header is a strip of the same plastic as the browser frame. */
+/* The header is part of the chassis; the open view carries the lit notch. */
 #head {
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 36px;
+  height: 34px;
   padding: 0 4px;
-  background: var(--plastic) var(--mold);
-  color: var(--plastic-ink);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  background: var(--chassis);
+  color: var(--ink);
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
   flex: none;
-}
-
-#head .hbtn {
-  color: var(--plastic-ink);
-}
-
-#head .hbtn:hover {
-  background: var(--plastic-hover);
-  color: var(--plastic-ink);
-}
-
-#head .hbtn.on {
-  background: var(--insert);
-  color: var(--accent);
-  box-shadow: var(--recess);
 }
 
 .grow {
@@ -75,7 +61,7 @@ code,
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--plastic-ink-2);
+  color: var(--ink-3);
   text-align: right;
   padding: 0 8px;
 }
@@ -88,7 +74,7 @@ code,
   min-width: 26px;
   padding: 0 4px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--r);
   background: transparent;
   color: var(--ink-2);
 }
@@ -105,71 +91,76 @@ code,
 }
 
 .hbtn.on {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--signal-soft);
+  color: var(--signal-text);
 }
 
 #views {
   display: flex;
+  align-items: stretch;
   height: 100%;
 }
 
-#views {
-  align-items: center;
-  gap: 2px;
-}
-
 #views button {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
   padding: 0 11px;
   border: 0;
-  border-radius: 8px;
   background: transparent;
-  color: var(--plastic-ink-2);
-  font-weight: 600;
+  color: var(--ink-2);
+  font-stretch: 87.5%;
+  font-size: 13px;
 }
 
 #views button:hover {
-  color: var(--plastic-ink);
-  background: var(--plastic-hover);
+  color: var(--ink);
+  background: var(--chassis-hover);
 }
 
-/* The open view is a clear window cut into the plastic strip. */
 #views button.on {
   color: var(--ink);
-  background: var(--insert);
-  box-shadow: var(--recess);
+  font-weight: 600;
 }
 
-/* Counts are die-cut stickers. */
+#views button.on::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  background: var(--signal);
+}
+
+/* Counts are small LCD-style chips. */
 .badge {
-  min-width: 17px;
+  min-width: 18px;
   height: 16px;
-  padding: 0 5px;
-  border-radius: 8px;
-  font-family: var(--font-num);
+  padding: 0 4px;
+  border-radius: var(--r-sm);
   font-size: 11px;
   line-height: 16px;
   text-align: center;
   font-weight: 600;
-  background: var(--insert-2);
+  font-stretch: 100%;
+  background: var(--panel-2);
   color: var(--ink);
-  box-shadow: 0 0 0 1.5px var(--keyline);
+  box-shadow: inset 0 0 0 1px var(--line-2);
 }
 
 .badge.err {
-  background: var(--blocked);
+  background: var(--bad);
   color: #fff;
+  box-shadow: none;
 }
 
 .badge.warn {
-  background: #ffcf4a;
+  background: #e8b931;
   color: #2a1d00;
+  box-shadow: none;
 }
-
 /* ---- shared layout ---------------------------------------------------------- */
 .view {
   flex: 1;
@@ -282,30 +273,30 @@ code,
 
 .subtabs button.on {
   color: var(--ink);
-  border-bottom-color: var(--plastic);
+  border-bottom-color: var(--signal);
   font-weight: 600;
 }
 
 .seg button.on,
 .list button.on {
-  background: var(--plastic);
-  color: var(--plastic-ink);
+  background: var(--panel-2);
+  color: var(--ink);
 }
 
 .dn.sel {
-  background: color-mix(in srgb, var(--plastic) 18%, transparent);
+  background: var(--signal-soft);
 }
 
 .net-row.sel {
-  background: color-mix(in srgb, var(--plastic) 18%, transparent);
+  background: var(--signal-soft);
 }
 
 .bar .fill {
-  background: var(--plastic);
+  background: var(--signal);
 }
 
 .card b {
-  font-family: var(--font-num);
+  font-family: var(--font);
   font-weight: 600;
 }
 
@@ -839,37 +830,53 @@ table.data td.act button:hover {
   padding: 12px;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.card {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.card b {
-  display: block;
-  font-size: 22px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-}
-
-.card span {
+.sh-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
   color: var(--ink-2);
 }
 
-.card .btn {
-  margin-top: 6px;
-  height: 24px;
-  padding: 0 10px;
-  border: 1px solid var(--line-2);
-  border-radius: 5px;
-  background: var(--surface);
+.sh-state b {
+  color: var(--ink);
+  margin-right: 6px;
+}
+
+.sh-state .btn {
+  height: 26px;
+  font-size: 12px;
+}
+
+.sh-lcd {
+  display: flex;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r);
+  background: var(--panel-2);
+}
+
+.silk {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.sh-reg {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 24px;
+}
+
+.sh-reg + .sh-reg {
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+}
+
+.sh-reg .silk {
+  color: var(--lcd-dim);
 }
 
 .bars {

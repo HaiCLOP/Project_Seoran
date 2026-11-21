@@ -7,45 +7,40 @@
 <script src="/icons.js"></script>
 <script src="/odometer.js"></script>
 <style>
-  html, body { min-height: 100%; background: var(--bg); }
-  body { min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; }
-  main {
-    flex: 1;
-    width: min(680px, calc(100vw - 48px));
-    margin: 0 auto;
-    padding-top: clamp(56px, 18vh, 170px);
+  html, body { height: 100%; }
+  body { min-height: 100vh; background: var(--page); overflow: hidden; }
+
+  /* Seoran's own front page: the mark, search, your sites, and one honest
+     line about what the shield has done. */
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
   }
-  .word {
-    margin: 0 0 22px;
+  .brand img { width: 40px; height: 40px; }
+  .brand span {
     font-family: var(--font-display);
-    font-size: clamp(34px, 5.2vw, 52px);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    color: var(--ink);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
-  .word b {
-    display: inline-block;
-    padding: 0.06em 0.22em 0.1em;
-    margin-left: 0.08em;
-    border-radius: 0.28em;
-    background: var(--plastic) var(--mold);
-    color: var(--plastic-ink);
-    font-weight: 800;
-    box-shadow: 0 0 0 3px var(--keyline), 0 2px 6px rgba(0, 0, 0, 0.2);
-    transform: rotate(-3deg);
+  main {
+    width: min(640px, calc(100vw - 48px));
+    margin: 22vh auto 0;
   }
   form {
     display: flex;
     align-items: center;
-    gap: 12px;
-    height: 56px;
-    padding: 0 8px 0 18px;
-    border-radius: 14px;
-    background: var(--insert);
-    box-shadow: var(--recess), 0 0 0 1px var(--line);
+    gap: 10px;
+    height: 46px;
+    padding: 0 16px;
+    border-radius: 23px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line), 0 1px 3px rgba(0, 0, 0, 0.08);
   }
-  form:focus-within { box-shadow: var(--recess), 0 0 0 2px var(--accent); }
+  form:focus-within { box-shadow: 0 0 0 2px var(--signal); }
   form .ic { color: var(--ink-3); flex: none; }
   #q {
     flex: 1;
@@ -54,173 +49,166 @@
     border: 0;
     outline: 0;
     background: transparent;
-    font-size: 16px;
+    font-size: 15px;
   }
   #q::placeholder { color: var(--ink-3); }
-  .go {
-    height: 40px;
-    padding: 0 16px;
-    border: 0;
-    border-radius: 10px;
-    background: var(--plastic) var(--mold);
-    color: var(--plastic-ink);
-    font-weight: 700;
-    box-shadow: var(--lift);
-  }
-  .go:hover { background-color: var(--plastic-hover); }
-  .go:active { box-shadow: var(--recess); }
+  #q:focus-visible { box-shadow: none; }
 
   .sites {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, 96px);
+    justify-content: center;
     gap: 6px;
-    margin-top: 34px;
+    margin-top: 36px;
   }
   .site {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 16px 8px 12px;
-    border-radius: 12px;
-    color: var(--ink-2);
+    gap: 8px;
+    padding: 10px 0 8px;
+    border-radius: var(--r);
+    color: var(--ink);
     text-decoration: none;
-    font-size: 12.5px;
-    font-weight: 600;
   }
-  .site:hover { background: var(--hover); color: var(--ink); }
+  .site:hover { background: var(--hover); }
   .site:focus-visible { box-shadow: var(--ring); }
-  /* Each site is a die-cut sticker. */
-  .stk {
-    width: 48px;
-    height: 48px;
+  .tile {
     display: grid;
     place-items: center;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    color: #fff;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 18px;
-    box-shadow: 0 0 0 3px var(--keyline), 0 2px 5px rgba(0, 0, 0, 0.22);
-    transform: rotate(var(--tilt, 0deg));
-    transition: transform 0.2s var(--ease);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
   }
-  .site:hover .stk { transform: rotate(0deg) translateY(-2px); }
+  .tile img { width: 24px; height: 24px; }
+  .tile .letter { font-size: 18px; font-weight: 600; color: var(--ink-2); }
   .site .name {
-    max-width: 100%;
+    max-width: 84px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    font-size: 12.5px;
   }
-  .site .forget {
+  .wrap { position: relative; }
+  .forget {
     position: absolute;
-    top: 6px;
+    top: 4px;
     right: 6px;
     width: 22px;
     height: 22px;
     display: grid;
     place-items: center;
     border: 0;
-    border-radius: 6px;
+    border-radius: 50%;
     background: transparent;
     color: var(--ink-3);
-    visibility: hidden;
+    opacity: 0;
   }
-  .site:hover .forget, .site:focus-within .forget { visibility: visible; }
-  .site .forget:hover { background: var(--press); color: var(--ink); }
+  .wrap:hover .forget, .forget:focus-visible { opacity: 1; }
+  .forget:hover { background: var(--press); color: var(--ink); }
 
-  footer {
+  .note {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 22px;
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 24px 16px 28px;
-  }
-  .cart {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 16px 8px 10px;
-    border-radius: 12px;
-    background: var(--plastic) var(--mold);
-    color: var(--plastic-ink);
-    font-weight: 600;
-  }
-  .cart .win {
-    display: inline-flex;
-    align-items: center;
     gap: 6px;
-    height: 32px;
-    padding: 0 10px;
-    border-radius: 8px;
-    background: var(--insert);
-    color: var(--ink);
-    box-shadow: var(--recess);
-    font-size: 18px;
+    color: var(--ink-2);
+    font-size: 12.5px;
   }
-  .cart .win .ic { color: var(--on); }
-  @media (max-width: 520px) { .sites { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-</style>
+  .note .ic { color: var(--signal-text); }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note a { color: var(--signal-text); text-decoration: none; margin-left: 6px; }
+  .note a:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .customize {
+    position: fixed;
+    right: 18px;
+    bottom: 14px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-2);
+  }
+  .customize:hover { background: var(--hover); color: var(--ink); }</style>
 </head>
 <body>
-<main>
-  <h1 class="word">Hey, <b>Seoran</b></h1>
-  <form id="search" autocomplete="off">
-    <span id="sic"></span>
-    <input id="q" type="text" spellcheck="false" autocomplete="off" placeholder="Search or type an address" aria-label="Search or type an address">
-    <button class="go" type="submit">Go</button>
-  </form>
-  <div id="sites"></div>
-</main>
-<footer id="foot" hidden>
-  <div class="cart"><span class="win"><span id="sdot"></span><span id="blocked"></span></span><span>ads and trackers blocked</span></div>
-</footer>
-<script>
+  <main>
+    <div class="brand"><img src="/logo.svg" alt=""><span>Seoran</span></div>
+    <form id="search" autocomplete="off" role="search">
+      <span id="sic"></span>
+      <input id="q" type="search" spellcheck="false" autocomplete="off" placeholder="Search the web" aria-label="Search the web">
+    </form>
+    <div id="sites"></div>
+  </main>
+
+  <p class="note" id="note" hidden><span id="nic"></span><span><b id="blocked">0</b> trackers and ads blocked since you installed Seoran</span><a href="#" id="shield-link">Shield settings</a></p>
+  <button class="customize" id="customize" title="Customize Seoran" aria-label="Customize Seoran"></button><script>
   'use strict';
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-  $('#sic').innerHTML = icon('search', 20);
-  $('#sdot').innerHTML = icon('shieldCheck', 16);
+  $('#sic').innerHTML = icon('search', 18);
+  $('#nic').innerHTML = icon('shieldCheck', 15);
+  $('#customize').innerHTML = icon('settings', 18);
 
   window.__seoranLook = ({ theme, plastic }) => {
     const r = document.documentElement;
     if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
-    if (plastic && plastic !== 'grape') r.dataset.plastic = plastic; else delete r.dataset.plastic;
+    if (plastic && plastic !== 'blue') r.dataset.signal = plastic; else delete r.dataset.signal;
   };
+
+  // A site's icon: the one we saw while browsing, else its /favicon.ico,
+  // else its first letter.
+  function face(s, site) {
+    const letter = esc((site.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase());
+    let origin = '';
+    try { origin = new URL(s.url).origin; } catch {}
+    const src = s.favicon || (origin ? `${origin}/favicon.ico` : '');
+    return src
+      ? `<img src="${esc(src)}" alt="" onerror="this.outerHTML='<span class=letter>${letter}</span>'">`
+      : `<span class="letter">${letter}</span>`;
+  }
 
   function render(d) {
     __seoranLook(d);
-    $('#q').placeholder = d.engine ? `Search with ${d.engine} or type an address` : 'Search or type an address';
-    $('#sites').innerHTML = d.topSites.length ? `<div class="sites">${d.topSites.map((s) => {
-      const site = s.site || s.url;
-      const letter = (site.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
-      const name = site.split('.').slice(-2, -1)[0] || site;
-      const h = hue(site);
-      const tilt = (h % 13) - 6;
-      return `<a class="site" href="${esc(s.url)}" title="${esc(s.title || site)}">
-        <span class="stk" style="background:hsl(${h} 62% 44%);--tilt:${tilt}deg">${esc(letter)}</span>
-        <span class="name">${esc(name)}</span>
-        <button class="forget" data-site="${esc(site)}" aria-label="Remove ${esc(site)}">${icon('x', 12)}</button>
-      </a>`;
-    }).join('')}</div>` : '';
-    $('#foot').hidden = !(d.shieldOn && d.blockedTotal);
+    $('#note').hidden = !d.shieldOn;
     odometer($('#blocked'), d.blockedTotal || 0);
+    $('#q').placeholder = d.engine ? `Search ${d.engine} or type a web address` : 'Search the web';
+    $('#sites').innerHTML = d.topSites.length ? `<div class="sites">${d.topSites.slice(0, 8).map((s) => {
+      const site = s.site || s.url;
+      const name = site.replace(/\.(com|org|net|io|co|xyz|in)$/, '');
+      return `<div class="wrap">
+        <a class="site" href="${esc(s.url)}" title="${esc(s.title || site)}"><span class="tile">${face(s, site)}</span><span class="name">${esc(name)}</span></a>
+        <button class="forget" data-site="${esc(site)}" aria-label="Remove ${esc(site)}">${icon('x', 12)}</button>
+      </div>`;
+    }).join('')}</div>` : '';
   }
 
   $('#sites').addEventListener('click', (e) => {
     const f = e.target.closest('.forget');
-    if (!f) return;
-    e.preventDefault();
-    seoran.send({ t: 'forgetSite', site: f.dataset.site });
+    if (f) seoran.send({ t: 'forgetSite', site: f.dataset.site });
   });
-
   $('#search').addEventListener('submit', (e) => {
     e.preventDefault();
     const q = $('#q').value.trim();
     if (q) seoran.send({ t: 'navigate', input: q });
   });
+  $('#customize').addEventListener('click', () => seoran.send({ t: 'navigate', input: 'seoran://settings' }));
+  $('#shield-link').addEventListener('click', (e) => { e.preventDefault(); seoran.send({ t: 'navigate', input: 'seoran://settings' }); });
 
-  window.__seoranReceive = (msg) => { if (msg.t === 'data') render(msg.data); };
+  window.__seoranReceive = (msg) => {
+    if (msg.t === 'data') render(msg.data);
+    if (msg.t === 'total') odometer($('#blocked'), msg.n);
+  };
   if (window.seoran) seoran.send({ t: 'hello' });
 </script>
 </body>

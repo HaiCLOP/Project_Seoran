@@ -23,10 +23,9 @@ $('#newtab').innerHTML = icon('plus');
 $('#back').innerHTML = icon('back');
 $('#forward').innerHTML = icon('forward');
 $('#reload').innerHTML = icon('reload');
-$('#star').innerHTML = icon('star', 15);
-$('#menu-btn').innerHTML = icon('dots');
-$('.shield-ic').innerHTML = icon('shieldCheck', 15);
-$('.pal-ic').innerHTML = icon('sparkle', 18);
+$('#star').innerHTML = icon('star', 16);
+$('#menu-btn').innerHTML = icon('menu', 18);
+$('.pal-ic').innerHTML = icon('search', 18);
 
 // ---- helpers -------------------------------------------------------------
 const hostOf = (url) => {
@@ -36,7 +35,7 @@ const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)
 const monogram = (title, url) => {
   const base = hostOf(url) || title || '?';
   const letter = (base.match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
-  return `<span class="fav mono" style="background:hsl(${hue(base)} 55% 48%)">${esc(letter)}</span>`;
+  return `<span class="fav mono">${esc(letter)}</span>`;
 };
 const prettyUrl = (url) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
@@ -53,7 +52,7 @@ function syncOverlay() {
   };
   const panel = open && { suggest: '#suggest', shield: '#shield-pop', menu: '#menu', palette: '#palette' }[open];
   if (panel) add($(panel));
-  for (const t of $('#toasts').children) add(t, 10);
+  for (const t of $('#toasts').children) add(t, 8);
   const key = JSON.stringify(rects);
   if (key === lastPanels) return;
   lastPanels = key;
@@ -144,32 +143,38 @@ function renderToolbar() {
   const star = $('#star');
   star.hidden = S.internal || !S.url;
   star.classList.toggle('on', S.bookmarked);
-  put(star, S.bookmarked ? 'on' : 'off', icon(S.bookmarked ? 'starFill' : 'star', 15));
+  put(star, S.bookmarked ? 'on' : 'off', icon(S.bookmarked ? 'starFill' : 'star', 16));
 
+  // The shield chip: the icon, plus this page's count once anything is blocked.
   const sh = S.shield;
   const btn = $('#shield');
   const count = sh.siteActive ? sh.blocked : 0;
-  btn.classList.toggle('active', sh.siteActive && count > 0);
-  btn.classList.toggle('off', !sh.siteActive && !S.internal);
-  const shieldIcon = sh.siteActive || S.internal ? 'shieldCheck' : 'shieldOff';
-  put(btn.querySelector('.shield-ic'), shieldIcon, icon(shieldIcon, 15));
-  odometer($('#shield-count'), count);
-  btn.title = sh.siteActive ? `Seoran Shield: ${count} blocked on this page` : 'Seoran Shield is off for this site';
+  btn.classList.toggle('active', sh.siteActive);
+  btn.classList.toggle('counting', count > 0);
+  put(btn.querySelector('.shield-ic'), sh.siteActive || !sh.site ? 'up' : 'down', icon(sh.siteActive || !sh.site ? 'shieldCheck' : 'shieldOff', 17));
+  const chip = $('#shield-count');
+  chip.hidden = count === 0;
+  if (count) odometer(chip, count > 999 ? '999+' : count);
+  const label = !sh.site ? 'Seoran Shield'
+    : sh.siteActive ? `Seoran Shield: ${count} blocked on this page`
+      : `Seoran Shield is off for ${sh.site}`;
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
 
   document.body.classList.toggle('maximized', S.maximized);
   put($('[data-win="max"]'), S.maximized, S.maximized ? '&#xE923;' : '&#xE922;');
   applyLook(S);
 
   if (open === 'shield') renderShield();
-  if (open === 'menu' && $('#menu')._look !== `${S.theme}|${S.plastic}`) renderMenu();
+  if (open === 'menu' && $('#menu')._look !== `${S.theme}|${S.plastic}|${S.bookmarked}|${S.closedCount}`) renderMenu();
 }
 
 function applyLook({ theme, plastic }) {
   const root = document.documentElement;
   if (theme && theme !== 'system') root.dataset.theme = theme;
   else delete root.dataset.theme;
-  if (plastic && plastic !== 'grape') root.dataset.plastic = plastic;
-  else delete root.dataset.plastic;
+  if (plastic && plastic !== 'blue') root.dataset.signal = plastic;
+  else delete root.dataset.signal;
 }
 
 function render() {
@@ -210,19 +215,34 @@ function closePanels(sync = true) {
 
 
 // ---- shield popover ------------------------------------------------------------
+// Brave-style shield panel: the site, the up/down switch, then the count.
 function renderShield() {
   const sh = S.shield;
-  odometer($('#sp-blocked'), sh.siteActive ? sh.blocked : 0);
-  $('#sp-site').textContent = sh.site || (S.internal ? 'Seoran page' : 'No site');
-  $('#sp-site-sub').textContent = !sh.site ? 'Nothing to block here'
-    : sh.siteActive ? 'Ads and trackers are blocked' : 'Shield is down for this site';
+  const tab = S.tabs.find((t) => t.id === S.active);
+  $('#sp-site').textContent = sh.site || (S.internal ? 'Seoran page' : 'This page');
+  put($('#sp-fav'), `${tab && tab.favicon}|${S.internal}`, S.internal ? '<img src="/logo.svg" alt="">'
+    : tab && tab.favicon ? `<img src="${esc(tab.favicon)}" alt="">` : icon('globe', 16));
+  $('#sp-site-sub').textContent = !sh.site ? "Seoran's own pages load no ads or trackers"
+    : !sh.enabled ? 'Shield is off on every site'
+      : sh.siteActive ? 'Shield on' : 'Shield off for this site';
   const st = $('#sp-site-toggle');
+  st.hidden = !sh.site || !sh.enabled;
   st.setAttribute('aria-checked', String(sh.siteActive));
-  st.disabled = !sh.site || !sh.enabled;
+  $('#sp-main').hidden = !sh.site || !sh.enabled;
+  odometer($('#sp-blocked'), sh.siteActive ? sh.blocked : 0);
+  $('#sp-count-label').textContent = sh.siteActive ? 'blocked on this page' : 'blocked (shield is off here)';
+  const top = sh.siteActive ? sh.top || [] : [];
+  put($('#sp-list'), JSON.stringify(top), top.map(([host, n]) =>
+    `<li><span class="host" title="${esc(host)}">${esc(host)}</span><span class="n">${n}</span></li>`).join(''));
+  $('#sp-hint').textContent = sh.siteActive
+    ? 'If the page breaks, switch the shield off for this site.'
+    : 'Ads and trackers load normally on this site.';
   $('#sp-global').setAttribute('aria-checked', String(sh.enabled));
-  $('#sp-total').textContent = `${sh.total.toLocaleString()} blocked in total`;
-  put($('#sp-lists'), sh.lists.join(','), sh.lists.map((l) => `<span class="sticker">${esc(l)}</span>`).join(''));
+  $('#sp-total').textContent = `${sh.total.toLocaleString()} blocked since install`;
+  $('#sp-total').title = `${sh.lists.length} filter lists: ${sh.lists.join(', ')}`;
 }
+
+$('#sp-settings').addEventListener('click', () => { closePanels(); send({ t: 'action', a: 'settings' }); });
 
 $('#shield').addEventListener('click', () => (open === 'shield' ? closePanels() : openPanel('shield')));
 $('#sp-site-toggle').addEventListener('click', () => send({ t: 'shieldSite', on: !S.shield.siteActive }));
@@ -231,39 +251,37 @@ $('#sp-update').addEventListener('click', () => { send({ t: 'updateFilters' }); 
 
 // ---- menu ----------------------------------------------------------------------
 const themeLabel = { system: 'System', light: 'Light', dark: 'Dark' };
-const PLASTICS = [
-  ['grape', 'Grape', '#6d35d9'],
-  ['tangerine', 'Tangerine', '#ff7a1a'],
-  ['lime', 'Lime', '#a6e22e'],
-  ['bondi', 'Bondi', '#007f8c'],
-  ['strawberry', 'Strawberry', '#dc2259'],
-  ['graphite', 'Graphite', '#303038'],
+// Accent colours.
+const SIGNALS = [
+  ['blue', 'Blue', '#1a5fd6'],
+  ['orange', 'Orange', '#e8590c'],
+  ['green', 'Green', '#1e8e3e'],
+  ['teal', 'Teal', '#0e8a99'],
+  ['pink', 'Pink', '#d6336c'],
+  ['graphite', 'Graphite', '#50545e'],
 ];
 function renderMenu() {
   const item = (a, ic, label, key = '', disabled = false) =>
     `<button class="mi" role="menuitem" data-a="${a}" ${disabled ? 'disabled' : ''}>${icon(ic)}<span>${label}</span>${key ? `<kbd>${key}</kbd>` : ''}</button>`;
-  const current = S.plastic || 'grape';
-  $('#menu')._look = `${S.theme}|${S.plastic}`;
+  const current = S.plastic || 'blue';
+  $('#menu')._look = `${S.theme}|${S.plastic}|${S.bookmarked}|${S.closedCount}`;
+  void current;
   $('#menu').innerHTML = [
-    `<div class="plastics"><div class="plastics-label">Plastic</div><div class="swatches" role="radiogroup" aria-label="Plastic colour">${
-      PLASTICS.map(([id, name, hex]) => `<button class="swatch" role="radio" aria-checked="${id === current}" data-plastic="${id}" title="${name}" aria-label="${name}" style="--sw:${hex}"></button>`).join('')
-    }</div></div>`,
+    item('newTab', 'plus', 'New tab', 'Ctrl+T'),
+    item('reopen', 'undo', 'Reopen closed tab', 'Ctrl+Shift+T', !S.closedCount),
     '<div class="sep"></div>',
-    item('newTab', 'plus', 'New tab', 'Ctrl T'),
-    item('reopen', 'undo', 'Reopen closed tab', 'Ctrl ⇧ T', !S.closedCount),
+    item('bookmark', S.bookmarked ? 'starFill' : 'star', S.bookmarked ? 'Remove bookmark' : 'Bookmark this tab', 'Ctrl+D', S.internal),
+    item('palette', 'command', 'Search tabs and commands', 'Ctrl+K'),
     '<div class="sep"></div>',
-    item('bookmark', S.bookmarked ? 'starFill' : 'star', S.bookmarked ? 'Remove bookmark' : 'Bookmark page', 'Ctrl D', S.internal),
-    item('palette', 'sparkle', 'Command palette', 'Ctrl K'),
-    item('theme', S.theme === 'dark' ? 'moon' : 'sun', `Theme: ${themeLabel[S.theme] || 'System'}`),
-    '<div class="sep"></div>',
-    item('settings', 'settings', 'Settings', 'Ctrl ,'),
+    item('theme', S.theme === 'dark' ? 'moon' : 'sun', `Appearance: ${themeLabel[S.theme] || 'System'}`),
+    item('settings', 'settings', 'Settings', 'Ctrl+,'),
     item('devtools', 'code', 'Developer tools', 'F12'),
   ].join('');
 }
 
 $('#menu').addEventListener('click', (e) => {
-  const sw = e.target.closest('.swatch');
-  if (sw) { send({ t: 'plastic', value: sw.dataset.plastic }); return; }
+  const sw = e.target.closest('.sig');
+  if (sw) { send({ t: 'plastic', value: sw.dataset.signal }); return; }
   const b = e.target.closest('.mi');
   if (!b || b.disabled) return;
   const a = b.dataset.a;
@@ -451,17 +469,17 @@ const pal = { items: [], sel: 0, history: [], hseq: 0 };
 function commands() {
   const sh = S.shield;
   return [
-    { a: 'newTab', label: 'New tab', ic: 'plus', key: 'Ctrl T' },
-    { a: 'closeTab', label: 'Close tab', ic: 'x', key: 'Ctrl W' },
-    { a: 'reopen', label: 'Reopen closed tab', ic: 'undo', key: 'Ctrl ⇧ T', off: !S.closedCount },
-    { a: 'bookmark', label: S.bookmarked ? 'Remove bookmark' : 'Bookmark this page', ic: 'star', key: 'Ctrl D', off: S.internal },
-    { a: 'reload', label: 'Reload page', ic: 'reload', key: 'Ctrl R' },
+    { a: 'newTab', label: 'New tab', ic: 'plus', key: 'Ctrl+T' },
+    { a: 'closeTab', label: 'Close tab', ic: 'x', key: 'Ctrl+W' },
+    { a: 'reopen', label: 'Reopen closed tab', ic: 'undo', key: 'Ctrl+Shift+T', off: !S.closedCount },
+    { a: 'bookmark', label: S.bookmarked ? 'Remove bookmark' : 'Bookmark this page', ic: 'star', key: 'Ctrl+D', off: S.internal },
+    { a: 'reload', label: 'Reload page', ic: 'reload', key: 'Ctrl+R' },
     { a: 'shieldSite', label: sh.siteActive ? `Turn shield off for ${sh.site}` : `Turn shield on for ${sh.site}`, ic: sh.siteActive ? 'shieldOff' : 'shieldCheck', off: !sh.site },
     { a: 'shieldGlobal', label: sh.enabled ? 'Turn shield off everywhere' : 'Turn shield on everywhere', ic: 'shield' },
     { a: 'updateFilters', label: 'Update shield filter lists', ic: 'download' },
     { a: 'theme', label: `Switch theme (now ${themeLabel[S.theme] || 'System'})`, ic: 'moon' },
-    ...PLASTICS.filter(([id]) => id !== (S.plastic || 'grape')).map(([id, name]) => ({ a: `plastic:${id}`, label: `Plastic: ${name}`, ic: 'sparkle' })),
-    { a: 'settings', label: 'Open settings', ic: 'settings', key: 'Ctrl ,' },
+    ...SIGNALS.filter(([id]) => id !== (S.plastic || 'blue')).map(([id, name]) => ({ a: `plastic:${id}`, label: `Accent colour: ${name}`, ic: 'swatch' })),
+    { a: 'settings', label: 'Open settings', ic: 'settings', key: 'Ctrl+,' },
     { a: 'devtools', label: 'Developer tools', ic: 'code', key: 'F12' },
   ].filter((c) => !c.off);
 }
@@ -491,7 +509,7 @@ function renderPalette() {
   const tabs = rank(S.tabs.filter((t) => t.id !== S.active), (t) => `${t.title} ${t.url}`).slice(0, 6)
     .map((t) => ({ kind: 'tab', id: t.id, label: t.title, sub: prettyUrl(t.url), ic: 'tab' }));
   if (tabs.length) groups.push(['Open tabs', tabs]);
-  // With no query, list the core commands; the plastics show up when searched.
+  // With no query, list the core commands; accent colours show up when searched.
   const cmds = rank(commands().filter((c) => q || !c.a.startsWith('plastic:')), (c) => c.label).slice(0, q ? 6 : 11).map((c) => ({ kind: 'cmd', ...c }));
   if (cmds.length) groups.push(['Commands', cmds]);
   if (q && pal.history.length) {

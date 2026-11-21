@@ -31,7 +31,7 @@ use crate::{
 };
 
 /// Height of the tab strip + toolbar, in logical pixels.
-const TOP: f64 = 88.0;
+const TOP: f64 = 84.0;
 const MAINTENANCE_EVERY: Duration = Duration::from_secs(30);
 const FLUSH_EVERY: Duration = Duration::from_millis(80);
 
@@ -135,6 +135,8 @@ struct Browser {
     devtools: DevTools,
     dirty: bool,
     last_flush: Instant,
+    /// Lifetime blocked count last sent to open new tab pages.
+    pushed_total: u64,
     chrome_ready: bool,
     last_maintenance: Instant,
 }
@@ -160,45 +162,46 @@ fn theme_bg(theme: &str, window: &Window) -> (u8, u8, u8, u8) {
         "light" => false,
         _ => window.theme() == tao::window::Theme::Dark,
     };
-    if dark { (20, 19, 23, 255) } else { (243, 240, 234, 255) }
+    if dark { (20, 21, 25, 255) } else { (230, 231, 235, 255) }
 }
 
-/// The Seoran mark (grape square, white S, lime dot), drawn in code at
-/// 64x64 so the window icon needs no image file.
+/// The hosts the shield blocked most on a tab's current page, busiest first.
+fn top_blocked_hosts(tab: &Tab) -> Vec<(String, u32)> {
+    let mut counts: Vec<(String, u32)> = Vec::new();
+    for b in tab.hooks.blocked_log.borrow().iter() {
+        let host = b.url.split_once("://").map(|x| x.1).unwrap_or(&b.url);
+        let host = host.split(['/', '?', '#', ':']).next().unwrap_or("").to_owned();
+        match counts.iter_mut().find(|(h, _)| *h == host) {
+            Some((_, n)) => *n += 1,
+            None => counts.push((host, 1)),
+        }
+    }
+    counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+    counts.truncate(4);
+    counts
+}
+
+/// The Seoran mark (a circle split by an S-curve, blue and amber, turned
+/// 45 degrees), drawn in code at 64x64 so the window icon needs no file.
 fn app_icon() -> Option<Icon> {
     let size = 64u32;
     let s = size as f32 / 32.0; // drawn on the logo's 32-unit grid
-    // Distance from p to the S: two half-circle arcs joined by straight bars.
-    let dist_s = |x: f32, y: f32| -> f32 {
-        let seg = |ax: f32, ay: f32, bx: f32, by: f32| {
-            let (dx, dy) = (bx - ax, by - ay);
-            let t = (((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)).clamp(0.0, 1.0);
-            (x - ax - t * dx).hypot(y - ay - t * dy)
-        };
-        let arc = |cx: f32, cy: f32, left: bool| {
-            let d = ((x - cx).hypot(y - cy) - 3.25).abs();
-            if (x <= cx) == left { d } else { f32::MAX }
-        };
-        seg(21.5, 9.5, 13.25, 9.5)
-            .min(arc(13.25, 12.75, true))
-            .min(seg(13.25, 16.0, 18.75, 16.0))
-            .min(arc(18.75, 19.25, false))
-            .min(seg(18.75, 22.5, 10.5, 22.5))
-    };
+    let (sin, cos) = std::f32::consts::FRAC_PI_4.sin_cos();
     let mut rgba = Vec::with_capacity((size * size * 4) as usize);
     for py in 0..size {
         for px in 0..size {
-            let (x, y) = ((px as f32 + 0.5) / s, (py as f32 + 0.5) / s);
-            let (fx, fy) = (x - 16.0, y - 16.0);
-            let corner = (fx.abs() - 7.0).max(0.0).hypot((fy.abs() - 7.0).max(0.0));
-            let pixel = if corner > 9.0 {
+            let (x, y) = ((px as f32 + 0.5) / s - 16.0, (py as f32 + 0.5) / s - 16.0);
+            // Undo the logo's -45 degree turn, then test the upright shape.
+            let (ux, uy) = (x * cos - y * sin, x * sin + y * cos);
+            let pixel = if ux.hypot(uy) > 14.0 {
                 [0, 0, 0, 0]
-            } else if (x - 24.5).hypot(y - 22.5) <= 2.4 {
-                [166, 226, 46, 255]
-            } else if dist_s(x, y) <= 1.8 {
-                [255, 255, 255, 255]
             } else {
-                [109, 53, 217, 255]
+                // Blue: the left half minus the top lobe, plus the bottom lobe
+                // (the same S-curve the SVG path draws).
+                let top_lobe = ux.hypot(uy + 7.0) <= 7.0;
+                let bottom_lobe = ux.hypot(uy - 7.0) <= 7.0;
+                let blue = (ux < 0.0 && !top_lobe) || (ux >= 0.0 && bottom_lobe);
+                if blue { [26, 95, 214, 255] } else { [245, 166, 35, 255] }
             };
             rgba.extend_from_slice(&pixel);
         }
@@ -282,6 +285,7 @@ impl Browser {
             devtools: DevTools { height: 320.0, ..Default::default() },
             dirty: true,
             last_flush: Instant::now(),
+            pushed_total: 0,
             chrome_ready: false,
             last_maintenance: Instant::now(),
         };
@@ -619,6 +623,7 @@ impl Browser {
                 "blocked": active.map(|t| t.hooks.blocked.get()).unwrap_or(0),
                 "total": shield.blocked_total(),
                 "lists": shield.sources(),
+                "top": active.map(top_blocked_hosts).unwrap_or_default(),
             },
         })
     }
@@ -636,6 +641,18 @@ impl Browser {
         self.dirty = false;
         self.last_flush = Instant::now();
         self.chrome_call("state", self.state_json());
+        // Keep every open new tab's lifetime count in step with the toolbar,
+        // so the shield never shows two different totals.
+        let total = self.shield.borrow().blocked_total();
+        if total != self.pushed_total {
+            self.pushed_total = total;
+            let js = format!("window.__seoranReceive && __seoranReceive({})", json!({ "t": "total", "n": total }));
+            for t in &self.tabs {
+                if let (Some("newtab"), Some(wv)) = (nav::internal_page(&t.url), &t.webview) {
+                    let _ = wv.evaluate_script(&js);
+                }
+            }
+        }
         None
     }
 
@@ -852,6 +869,7 @@ impl Browser {
                     self.store.settings.theme = t.into();
                     self.store.save_settings();
                     self.apply_theme();
+                    self.broadcast_look();
                     self.dirty = true;
                 }
             }
@@ -1018,7 +1036,9 @@ impl Browser {
                     "url": h.url,
                     "title": h.title,
                     "site": shield::site_of(&h.url),
+                    "favicon": h.favicon,
                 })).collect::<Vec<_>>(),
+                "lists": shield.sources().len(),
             }),
             "settings" => json!({
                 "theme": s.theme, "plastic": s.plastic, "plastics": store::PLASTICS,
@@ -1095,6 +1115,8 @@ impl Browser {
             }
             UserEvent::Favicon { tab, url } => {
                 if let Some(i) = self.index_of(tab) {
+                    let page = self.tabs[i].url.clone();
+                    self.store.set_favicon(&page, &url);
                     self.tabs[i].favicon = url;
                     self.dirty = true;
                 }
@@ -1338,6 +1360,13 @@ impl Browser {
         self.last_maintenance = Instant::now();
         if self.store.history_dirty {
             self.store.save_history();
+        }
+        // Save the lifetime blocked count too, so a crash or forced close
+        // never resets it.
+        let total = self.shield.borrow().blocked_total();
+        if total != self.store.settings.blocked_total {
+            self.store.settings.blocked_total = total;
+            self.store.save_settings();
         }
         self.save_session();
         let limit = Duration::from_secs(self.store.settings.sleep_tabs_after_min.max(1) * 60);

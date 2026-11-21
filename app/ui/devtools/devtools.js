@@ -83,7 +83,7 @@ window.sd = {
 window.__seoranLook = ({ theme, plastic }) => {
   const r = document.documentElement;
   if (theme && theme !== 'system') r.dataset.theme = theme; else delete r.dataset.theme;
-  if (plastic && plastic !== 'grape') r.dataset.plastic = plastic; else delete r.dataset.plastic;
+  if (plastic && plastic !== 'blue') r.dataset.signal = plastic; else delete r.dataset.signal;
 };
 
 // ---- chrome of the panel -------------------------------------------------------
@@ -989,20 +989,22 @@ const shieldView = (() => {
     const top = [...byDomain].sort((a, b) => b[1] - a[1]).slice(0, 10);
     const max = top.length ? top[0][1] : 1;
     const first = blocked.length ? blocked[0].at : 0;
-    // The count cards persist between refreshes so their digits can roll.
+    // The readout persists between refreshes so its digits can roll.
     if (!$('#sh-cards')) {
-      body.innerHTML = `<div class="cards" id="sh-cards">
-        <div class="card"><b id="sh-n1"></b><span>requests blocked on this page</span></div>
-        <div class="card"><b id="sh-n2"></b><span>scriptlet rules running</span></div>
-        <div class="card"><b id="sh-n3"></b><span>cosmetic rules hiding elements</span></div>
-        <div class="card" id="sh-state"></div>
+      body.innerHTML = `<div id="sh-cards">
+        <div class="sh-state" id="sh-state"></div>
+        <div class="lcd sh-lcd">
+          <div class="sh-reg"><span id="sh-n1"></span><span class="silk">blocked on this page</span></div>
+          <div class="sh-reg"><span id="sh-n2"></span><span class="silk">scriptlet rules</span></div>
+          <div class="sh-reg"><span id="sh-n3"></span><span class="silk">cosmetic rules</span></div>
+        </div>
       </div><div id="sh-rest"></div>`;
     }
     odometer($('#sh-n1'), blocked.length);
     odometer($('#sh-n2'), (r.scriptlets || []).reduce((n, s) => n + s[1], 0));
     odometer($('#sh-n3'), r.cosmetic || 0);
-    $('#sh-state').innerHTML = `<b style="color:${r.active ? 'var(--on)' : 'var(--ink-3)'}">${r.active ? 'On' : 'Off'}</b><span>${r.site ? esc(r.site) : 'Shield'}</span>
-      ${r.site && r.enabled ? `<div><button class="btn" id="sh-toggle">${r.active ? 'Turn off for this site' : 'Turn on for this site'}</button></div>` : ''}`;
+    $('#sh-state').innerHTML = `<span><b>${r.site ? esc(r.site) : 'This page'}</b> ${!r.site ? "Seoran's own pages load nothing to block" : !r.enabled ? 'Shield is off on every site' : r.active ? 'Shield is on' : 'Shield is off for this site'}</span>
+      ${r.site && r.enabled ? `<button class="btn" id="sh-toggle">${r.active ? 'Turn off for this site' : 'Turn on for this site'}</button>` : ''}`;
     $('#sh-rest').innerHTML = `
       ${(r.scriptlets || []).length ? `<h3 class="sec">Scriptlets</h3><div class="chips">${r.scriptlets.map(([n, c]) => `<span>${esc(n)} ×${c}</span>`).join('')}</div>` : ''}
       ${top.length ? `<h3 class="sec">Most blocked</h3><div class="bars">${top.map(([d, n]) => `<div class="bar"><span class="dom" title="${esc(d)}">${esc(d)}</span><span class="track"><span class="fill" style="display:block;width:${(n / max) * 100}%"></span></span><span class="num">${n}</span></div>`).join('')}</div>` : ''}

@@ -1,20 +1,19 @@
-/* Seoran browser chrome: Candy Plastic.
-   The shell is molded plastic; the active tab, the address bar and every
-   panel are clear-window inserts set into it. */
+/* Seoran browser chrome, in the Chromium/Brave mould: tabs on a neutral
+   frame, the active tab merging into the toolbar, a rounded address bar
+   with the shield inside it, round toolbar buttons, 12px popups. */
 html,
 body {
   height: 100%;
   overflow: hidden;
-  background: var(--plastic);
+  background: var(--frame);
   user-select: none;
 }
 
 #bar {
   position: relative;
-  height: 88px;
-  background: var(--plastic) var(--mold);
-  color: var(--plastic-ink);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  height: 84px;
+  background: var(--frame);
+  color: var(--ink);
 }
 
 #resize-top {
@@ -36,52 +35,39 @@ body {
 
 /* ---- tab strip ------------------------------------------------------- */
 #tabrow {
-  height: 42px;
+  height: 40px;
   padding: 6px 0 0 8px;
-  gap: 2px;
+  align-items: flex-end;
 }
 
 #brand {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   flex: none;
-  margin-right: 4px;
+  align-self: center;
+  margin: 0 6px 0 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: 50%;
   background: transparent;
 }
 
 #brand:hover {
-  background: var(--plastic-hover);
+  background: var(--frame-hover);
 }
 
-#brand .mark-bg {
-  fill: var(--plastic-ink);
-}
-
-#brand .mark-s {
-  stroke: var(--plastic);
-}
-
-#brand .mark-dot {
-  fill: #a6e22e;
-  stroke: var(--plastic-ink);
-  stroke-width: 1.4;
-}
-
-:root[data-plastic="lime"] #brand .mark-dot {
-  fill: #6d35d9;
+#brand img {
+  display: block;
 }
 
 #tabs {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  align-items: flex-end;
   min-width: 0;
   flex: 0 1 auto;
-  height: 36px;
+  height: 34px;
+  padding: 0 8px;
   overflow: hidden;
 }
 
@@ -90,54 +76,77 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
-  width: 220px;
-  min-width: 40px;
-  flex: 0 1 220px;
-  padding: 0 4px 0 10px;
-  border-radius: 9px;
-  color: var(--plastic-ink-2);
-  transition: background-color 0.12s var(--ease), color 0.12s var(--ease);
+  width: 240px;
+  min-width: 44px;
+  height: 34px;
+  flex: 0 1 240px;
+  padding: 0 6px 0 12px;
+  border-radius: 8px 8px 0 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  /* the separator between inactive tabs */
+  background-image: linear-gradient(var(--line-2), var(--line-2));
+  background-size: 1px 18px;
+  background-position: right center;
+  background-repeat: no-repeat;
 }
 
 .tab:hover {
-  background: var(--plastic-hover);
-  color: var(--plastic-ink);
-}
-
-/* The active tab is a clear window cut into the plastic. */
-.tab.active {
-  background: var(--insert);
   color: var(--ink);
-  box-shadow: var(--recess);
+  background-color: var(--frame-hover);
+  background-image: none;
+  border-radius: 8px;
+  height: 30px;
+  margin-bottom: 2px;
 }
 
-.tab + .tab:not(.active):not(:hover)::before {
+.tab:has(+ .tab.active),
+.tab:has(+ .tab:hover),
+.tab:last-child {
+  background-image: none;
+}
+
+/* The active tab is cut from the same sheet as the toolbar. */
+.tab.active {
+  height: 34px;
+  margin-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: var(--toolbar);
+  color: var(--ink);
+  z-index: 1;
+}
+
+.tab.active::before,
+.tab.active::after {
   content: "";
   position: absolute;
-  left: -2px;
-  top: 10px;
-  bottom: 10px;
-  width: 1px;
-  background: color-mix(in srgb, var(--plastic-ink) 22%, transparent);
+  bottom: 0;
+  width: 8px;
+  height: 8px;
 }
 
-.tab.active + .tab::before,
-.tab:hover + .tab::before {
-  display: none;
+.tab.active::before {
+  left: -8px;
+  background: radial-gradient(circle at 0 0, transparent 7.5px, var(--toolbar) 8px);
+}
+
+.tab.active::after {
+  right: -8px;
+  background: radial-gradient(circle at 100% 0, transparent 7.5px, var(--toolbar) 8px);
 }
 
 .tab.dragging {
   z-index: 3;
-  transition: none;
-  background: var(--insert);
-  color: var(--ink);
-  box-shadow: var(--recess), 0 4px 10px rgba(0, 0, 0, 0.25);
+  background: var(--toolbar);
+  border-radius: 8px;
+  height: 30px;
+  margin-bottom: 2px;
+  box-shadow: 0 0 0 1px var(--line-2);
 }
 
 .tab.sleeping .fav,
 .tab.sleeping .title {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .tab .fav {
@@ -147,21 +156,19 @@ body {
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 5px;
+  border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
-  color: #fff;
 }
 
 .tab .fav img {
   width: 16px;
   height: 16px;
-  border-radius: 3px;
 }
 
 .tab .fav.mono {
-  font-family: var(--font-num);
-  box-shadow: 0 0 0 1.5px var(--keyline);
+  background: var(--press);
+  color: var(--ink-2);
 }
 
 .tab.loading .fav > * {
@@ -173,13 +180,10 @@ body {
   position: absolute;
   inset: 1px;
   border-radius: 50%;
-  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-top-color: currentColor;
-  animation: spin 0.7s linear infinite;
-}
-
-.tab.active.loading .fav::after {
-  border-top-color: var(--accent);
+  border: 2px solid transparent;
+  border-top-color: var(--signal);
+  border-right-color: var(--signal);
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -193,39 +197,30 @@ body {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  mask-image: linear-gradient(90deg, #000 86%, transparent);
-}
-
-.tab.active .title {
-  font-weight: 600;
+  mask-image: linear-gradient(90deg, #000 85%, transparent);
 }
 
 .tab .close {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex: none;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 6px;
+  border-radius: 50%;
   background: transparent;
-  color: inherit;
+  color: var(--ink-2);
   opacity: 0;
 }
 
 .tab:hover .close,
 .tab.active .close {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .tab .close:hover {
-  opacity: 1;
-  background: var(--plastic-press);
-}
-
-.tab.active .close:hover {
   background: var(--press);
+  color: var(--ink);
 }
 
 .tab.narrow {
@@ -242,6 +237,11 @@ body {
   display: none;
 }
 
+#newtab {
+  align-self: center;
+  margin-bottom: -4px;
+}
+
 .drag {
   flex: 1;
   align-self: stretch;
@@ -256,16 +256,16 @@ body {
 
 #wincontrols button {
   width: 46px;
-  height: 36px;
+  height: 34px;
   border: 0;
   background: transparent;
   font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
   font-size: 10px;
-  color: var(--plastic-ink);
+  color: var(--ink);
 }
 
 #wincontrols button:hover {
-  background: var(--plastic-hover);
+  background: var(--frame-hover);
 }
 
 #wincontrols button.close:hover {
@@ -275,120 +275,100 @@ body {
 
 /* ---- toolbar ---------------------------------------------------------- */
 #toolbar {
-  height: 46px;
-  padding: 0 8px 2px;
+  height: 44px;
+  padding: 0 6px;
   gap: 2px;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--line);
 }
 
-/* Molded plastic buttons. */
-.pbtn {
+/* Round toolbar buttons, Chromium style. */
+.tbtn {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   flex: none;
   border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--plastic-ink);
-}
-
-.pbtn:hover:not(:disabled) {
-  background: var(--plastic-hover);
-  box-shadow: var(--lift);
-}
-
-.pbtn:active:not(:disabled) {
-  background: var(--plastic-press);
-  box-shadow: var(--recess);
-}
-
-.pbtn:disabled {
-  opacity: 0.38;
-}
-
-#newtab {
-  width: 30px;
-  height: 30px;
-}
-
-.pbtn:focus-visible,
-#brand:focus-visible,
-.cartridge:focus-visible,
-.tab:focus-visible {
-  box-shadow: 0 0 0 2px var(--plastic-ink);
-}
-
-/* Buttons inside a clear insert. */
-.ibtn {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border: 0;
-  border-radius: 7px;
+  border-radius: 50%;
   background: transparent;
   color: var(--ink-2);
 }
 
-.ibtn:hover {
+.tbtn:hover:not(:disabled) {
   background: var(--hover);
   color: var(--ink);
 }
 
-/* The address bar: the big clear window. */
+.tbtn:active:not(:disabled) {
+  background: var(--press);
+}
+
+.tbtn:disabled {
+  opacity: 0.4;
+}
+
+#tabrow .tbtn:hover {
+  background: var(--frame-hover);
+}
+
+/* The address bar. */
 #omnibox {
   position: relative;
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   height: 34px;
   margin: 0 6px;
-  padding: 0 3px 0 8px;
-  border-radius: 10px;
-  background: var(--insert);
-  color: var(--ink);
-  box-shadow: var(--recess);
+  padding: 0 4px 0 4px;
+  border-radius: 17px;
+  background: var(--field);
+}
+
+#omnibox:hover {
+  background: var(--field-hover);
 }
 
 #omnibox.focused {
-  box-shadow: var(--recess), 0 0 0 2px var(--plastic-ink);
+  background: var(--panel);
+  box-shadow: 0 0 0 2px var(--signal);
+}
+
+/* The bar draws focus; the field inside must not draw a second ring. */
+#address:focus-visible,
+#pal-q:focus-visible {
+  box-shadow: none;
 }
 
 #site-badge {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   flex: none;
-  border-radius: 6px;
-  color: var(--ink-3);
-}
-
-#site-badge.secure {
-  color: var(--on);
+  border-radius: 50%;
+  color: var(--ink-2);
 }
 
 #site-badge.insecure {
   color: var(--warn);
 }
 
-#site-badge img,
-#site-badge svg.mark {
-  width: 15px;
-  height: 15px;
+#site-badge img {
+  width: 16px;
+  height: 16px;
 }
 
 #address {
   flex: 1;
   min-width: 0;
   height: 100%;
+  padding: 0 6px;
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 13.5px;
+  font-size: 14px;
   user-select: text;
 }
 
@@ -396,69 +376,86 @@ body {
   color: var(--ink-3);
 }
 
-#star.on {
-  color: var(--accent);
+/* Buttons inside the address bar. */
+.obtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
 }
 
-/* The shield cartridge: a recessed window with a rolling count. */
-.cartridge {
+.obtn:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+#star.on {
+  color: var(--signal-text);
+}
+
+.omni-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--line-2);
+}
+
+/* The shield chip: icon plus the page's blocked count, side by side. */
+.shield-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  min-width: 34px;
-  margin-right: 2px;
-  padding: 0 10px 0 9px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--insert);
-  color: var(--ink);
-  box-shadow: var(--recess);
-  font-size: 15px;
+  gap: 4px;
+  width: auto;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 13px;
 }
 
-.cartridge:hover {
-  background: var(--insert-2);
-}
-
-.cartridge .shield-ic {
+.shield-btn .shield-ic {
   display: grid;
   color: var(--ink-3);
 }
 
-.cartridge.active .shield-ic {
-  color: var(--on);
+.shield-btn.active .shield-ic {
+  color: var(--signal-text);
 }
 
-.cartridge.off .shield-ic {
-  color: var(--blocked);
+.shield-btn.counting {
+  background: var(--signal-soft);
 }
 
-.cartridge.off #shield-count {
-  color: var(--ink-3);
+.shield-btn.counting:hover {
+  background: color-mix(in srgb, var(--signal) 20%, transparent);
 }
 
-#shield-count {
-  min-width: 0.62em;
+.shield-count {
+  color: var(--signal-text);
+  font-size: 12px;
+  font-weight: 600;
 }
-
-/* ---- panels over the page ----------------------------------------------
-   The view is clipped to these boxes: opaque inserts with a plastic rim
-   along the top, no shadows outside. */
+/* ---- popups over the page ----------------------------------------------
+   The view is clipped to these boxes, so they carry a hairline border
+   instead of a drop shadow. */
 #layer {
   position: fixed;
-  inset: 88px 0 0 0;
+  inset: 84px 0 0 0;
   pointer-events: none;
 }
 
 .panel {
   position: absolute;
   pointer-events: auto;
-  background: var(--insert);
+  background: var(--panel);
   color: var(--ink);
   border: 1px solid var(--line-2);
-  border-top: 4px solid var(--plastic);
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   overflow: hidden;
 }
 
@@ -468,28 +465,24 @@ body {
 
 /* omnibox suggestions */
 #suggest {
-  padding: 4px;
+  padding: 6px 0;
 }
 
 .sg {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 8px;
+  gap: 12px;
+  height: 36px;
+  padding: 0 14px;
   color: var(--ink);
 }
 
 .sg .sg-ic {
-  width: 24px;
-  height: 24px;
+  width: 20px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 7px;
-  color: var(--ink-2);
-  background: var(--insert-2);
+  color: var(--ink-3);
 }
 
 .sg .sg-main {
@@ -497,7 +490,7 @@ body {
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -508,10 +501,14 @@ body {
 }
 
 .sg .sg-sub {
-  color: var(--ink-3);
+  color: var(--signal-text);
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+}
+
+.sg .sg-sub::before {
+  content: "– ";
+  color: var(--ink-3);
 }
 
 .sg mark {
@@ -522,6 +519,7 @@ body {
 
 .sg .sg-go {
   visibility: hidden;
+  color: var(--ink-3);
 }
 
 .sg kbd {
@@ -533,88 +531,139 @@ body {
 }
 
 .sg.sel {
-  background: var(--plastic) var(--mold);
-  color: var(--plastic-ink);
-}
-
-.sg.sel .sg-sub {
-  color: var(--plastic-ink-2);
-}
-
-.sg.sel .sg-ic {
-  background: var(--plastic-ink);
-  color: var(--plastic);
+  background: var(--press);
 }
 
 .sg.sel .sg-go {
   visibility: visible;
 }
 
-.sg.sel kbd {
-  background: var(--plastic-hover);
-  color: var(--plastic-ink);
-  box-shadow: none;
-}
-
-/* shield popover */
+/* shield panel */
 .pop {
-  width: 300px;
+  width: 320px;
 }
 
 .sp-head {
-  padding: 14px 16px 12px;
-  background: var(--plastic) var(--mold);
-  color: var(--plastic-ink);
-}
-
-.sp-big {
-  font-size: 40px;
-  min-height: 44px;
-}
-
-.sp-label {
-  margin-top: 2px;
-  color: var(--plastic-ink-2);
-  font-weight: 600;
-}
-
-.sp-site {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 10px 8px 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--insert-2);
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sp-fav {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.sp-fav img {
+  width: 16px;
+  height: 16px;
 }
 
 .sp-site-text {
+  flex: 1;
   min-width: 0;
 }
 
 .sp-site-name {
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sp-site-sub {
+  margin-top: 1px;
   color: var(--ink-2);
   font-size: 12px;
-  margin-top: 1px;
 }
 
-.sp-rows {
-  padding: 4px 8px 14px;
+.switch.big {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+}
+
+.switch.big::after {
+  width: 16px;
+  height: 16px;
+}
+
+.switch.big[aria-checked="true"]::after {
+  transform: translateX(18px);
+}
+
+.sp-main {
+  padding: 14px 16px 12px;
+}
+
+.sp-count-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sp-count {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sp-count-label {
+  color: var(--ink-2);
+}
+
+/* What the shield blocked here: hosts with their counts. */
+.sp-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sp-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 26px;
+  font-size: 12.5px;
+}
+
+.sp-list .host {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+.sp-list .n {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-hint {
+  margin: 10px 0 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.sp-foot {
+  padding: 6px 16px 12px;
+  border-top: 1px solid var(--line);
 }
 
 .sp-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 7px 0;
 }
 
 .sp-row.muted {
@@ -622,56 +671,44 @@ body {
   font-size: 12px;
 }
 
-.sp-lists {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px 6px;
-  padding: 4px 12px 0;
-}
-
-.sp-lists .sticker {
-  background: var(--insert-2);
-  color: var(--ink-2);
-  font-weight: 600;
-  box-shadow: 0 0 0 1.5px var(--line-2);
+.sp-settings {
+  margin-top: 4px;
 }
 
 .link {
   border: 0;
   background: none;
   padding: 0;
-  color: var(--accent);
-  font-weight: 650;
-  font-size: 12px;
+  color: var(--signal-text);
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .link:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 2px;
 }
 
-/* menu */
+/* app menu */
 #menu {
-  width: 264px;
-  padding: 4px;
+  width: 280px;
+  padding: 6px 0;
 }
 
 .mi {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  height: 34px;
-  padding: 0 10px;
+  height: 32px;
+  padding: 0 16px;
   border: 0;
-  border-radius: 8px;
   background: transparent;
   text-align: left;
   color: var(--ink);
 }
 
-.mi:hover,
-.mi.sel {
+.mi:hover {
   background: var(--hover);
 }
 
@@ -687,55 +724,17 @@ body {
   flex: 1;
 }
 
-.mi kbd {
-  margin-left: auto;
-}
-
 .sep {
   height: 1px;
-  margin: 4px 6px;
+  margin: 6px 0;
   background: var(--line);
-}
-
-/* plastic picker */
-.plastics {
-  padding: 8px 10px 10px;
-}
-
-.plastics-label {
-  margin-bottom: 8px;
-  color: var(--ink-2);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.swatches {
-  display: flex;
-  gap: 8px;
-}
-
-.swatch {
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--sw) linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%);
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.25);
-}
-
-.swatch:hover {
-  transform: translateY(-1px);
-}
-
-.swatch[aria-checked="true"] {
-  box-shadow: 0 0 0 2px var(--insert), 0 0 0 4px var(--ink), inset 0 -2px 0 rgba(0, 0, 0, 0.18);
 }
 
 /* command palette */
 #palette {
   left: 50%;
-  top: 48px;
-  width: min(620px, calc(100vw - 32px));
+  top: 40px;
+  width: min(600px, calc(100vw - 32px));
   transform: translateX(-50%);
 }
 
@@ -743,13 +742,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 52px;
-  padding: 0 14px;
+  height: 48px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--line);
 }
 
 .pal-ic {
-  color: var(--accent);
+  color: var(--ink-3);
   display: grid;
 }
 
@@ -758,45 +757,37 @@ body {
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 16px;
+  font-size: 15px;
   user-select: text;
 }
 
 #pal-list {
-  max-height: min(400px, calc(100vh - 240px));
+  max-height: min(420px, calc(100vh - 200px));
   overflow-y: auto;
-  padding: 4px;
+  padding: 4px 0 8px;
 }
 
-.pal-group {
-  padding: 10px 10px 4px;
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+#pal-list .sg .sg-sub {
   color: var(--ink-3);
 }
 
+.pal-group {
+  padding: 10px 16px 4px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .pal-empty {
-  padding: 24px;
+  padding: 22px;
   text-align: center;
   color: var(--ink-2);
 }
 
-.pal-foot {
-  display: flex;
-  gap: 16px;
-  padding: 8px 14px;
-  border-top: 1px solid var(--line);
-  color: var(--ink-2);
-  font-size: 11.5px;
-}
-
-/* toasts: a plastic tag */
+/* toasts (snackbar) */
 #toasts {
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -808,16 +799,15 @@ body {
 .toast {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 38px;
-  padding: 0 5px 0 14px;
-  border-radius: 10px;
-  background: var(--plastic) var(--mold);
-  color: var(--plastic-ink);
+  gap: 16px;
+  height: 40px;
+  padding: 0 6px 0 16px;
+  border-radius: var(--r);
+  background: #2c2e34;
+  color: #eceef2;
   pointer-events: auto;
   white-space: nowrap;
   max-width: 560px;
-  font-weight: 600;
 }
 
 .toast span {
@@ -826,20 +816,19 @@ body {
 }
 
 .toast.no-action {
-  padding-right: 14px;
+  padding-right: 16px;
 }
 
 .toast button {
-  height: 28px;
+  height: 30px;
   padding: 0 12px;
   border: 0;
-  border-radius: 7px;
-  background: var(--insert);
-  color: var(--ink);
-  font-weight: 700;
-  box-shadow: var(--recess);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--signal-d);
+  font-weight: 600;
 }
 
 .toast button:hover {
-  background: var(--insert-2);
+  background: rgba(255, 255, 255, 0.08);
 }

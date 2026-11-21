@@ -12,15 +12,11 @@
   <header id="bar">
     <div id="resize-top" aria-hidden="true"></div>
     <div class="row" id="tabrow">
-      <button id="brand" title="Seoran menu" aria-label="Seoran menu" aria-haspopup="menu">
-        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
-          <rect width="32" height="32" rx="9" class="mark-bg"/>
-          <path d="M21.5 9.5H13.25a3.25 3.25 0 0 0 0 6.5h5.5a3.25 3.25 0 0 1 0 6.5H10.5" fill="none" class="mark-s" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="24.5" cy="22.5" r="2.4" class="mark-dot"/>
-        </svg>
+      <button id="brand" title="Seoran" aria-label="Seoran menu" aria-haspopup="menu">
+        <img src="/logo.svg" alt="" width="18" height="18">
       </button>
       <div id="tabs" role="tablist" aria-label="Tabs"></div>
-      <button id="newtab" class="pbtn" title="New tab (Ctrl+T)" aria-label="New tab"></button>
+      <button id="newtab" class="tbtn" title="New tab (Ctrl+T)" aria-label="New tab"></button>
       <div id="drag" class="drag"></div>
       <div id="wincontrols">
         <button data-win="min" aria-label="Minimize">&#xE921;</button>
@@ -30,57 +26,60 @@
     </div>
 
     <div class="row" id="toolbar">
-      <button id="back" class="pbtn" title="Back (Alt+Left)" aria-label="Back"></button>
-      <button id="forward" class="pbtn" title="Forward (Alt+Right)" aria-label="Forward"></button>
-      <button id="reload" class="pbtn" title="Reload (Ctrl+R)" aria-label="Reload"></button>
+      <button id="back" class="tbtn" title="Back (Alt+Left)" aria-label="Back"></button>
+      <button id="forward" class="tbtn" title="Forward (Alt+Right)" aria-label="Forward"></button>
+      <button id="reload" class="tbtn" title="Reload (Ctrl+R)" aria-label="Reload"></button>
 
       <form id="omnibox" autocomplete="off">
         <span id="site-badge" aria-hidden="true"></span>
         <input id="address" type="text" spellcheck="false" autocomplete="off"
-               placeholder="Search or type an address" aria-label="Address and search bar"
+               placeholder="Search or type a web address" aria-label="Address and search bar"
                aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
-        <button id="star" type="button" class="ibtn" title="Bookmark (Ctrl+D)" aria-label="Bookmark this page"></button>
+        <button id="star" type="button" class="obtn" title="Bookmark this tab (Ctrl+D)" aria-label="Bookmark this tab"></button>
+        <span class="omni-sep" aria-hidden="true"></span>
+        <button id="shield" type="button" class="obtn shield-btn" aria-haspopup="dialog">
+          <span class="shield-ic"></span><span id="shield-count" class="shield-count" hidden></span>
+        </button>
       </form>
 
-      <button id="shield" class="cartridge" title="Seoran Shield" aria-label="Seoran Shield" aria-haspopup="dialog">
-        <span class="shield-ic"></span><span id="shield-count" class="odo"></span>
-      </button>
-      <button id="menu-btn" class="pbtn" title="Menu" aria-label="Menu" aria-haspopup="menu"></button>
+      <button id="menu-btn" class="tbtn" title="Customize and control Seoran" aria-label="Menu" aria-haspopup="menu"></button>
     </div>
   </header>
 
   <div id="layer">
     <div id="suggest" class="panel drop" role="listbox" aria-label="Suggestions" hidden></div>
 
-    <div id="shield-pop" class="panel drop pop" role="dialog" aria-label="Seoran Shield" hidden>
+    <div id="shield-pop" class="panel drop pop" role="dialog" aria-labelledby="sp-site" hidden>
       <div class="sp-head">
-        <div id="sp-blocked" class="sp-big"></div>
-        <div class="sp-label">blocked on this page</div>
-      </div>
-      <div class="sp-site">
+        <span class="sp-fav" id="sp-fav" aria-hidden="true"></span>
         <div class="sp-site-text">
           <div class="sp-site-name" id="sp-site">example.com</div>
-          <div class="sp-site-sub" id="sp-site-sub">Ads and trackers are blocked</div>
+          <div class="sp-site-sub" id="sp-site-sub">Shield on</div>
         </div>
-        <button class="switch" id="sp-site-toggle" role="switch" aria-checked="true" aria-label="Shield on this site"></button>
+        <button class="switch big" id="sp-site-toggle" role="switch" aria-checked="true" aria-label="Shield for this site"></button>
       </div>
-      <div class="sp-rows">
-        <div class="sp-row"><span>Shield everywhere</span><button class="switch" id="sp-global" role="switch" aria-checked="true" aria-label="Shield everywhere"></button></div>
-        <div class="sp-row muted"><span id="sp-total">0 blocked in total</span><button class="link" id="sp-update">Update lists</button></div>
-        <div class="sp-lists" id="sp-lists"></div>
+      <div class="sp-main" id="sp-main">
+        <div class="sp-count-row">
+          <span class="sp-count" id="sp-blocked"></span>
+          <span class="sp-count-label" id="sp-count-label">blocked on this page</span>
+        </div>
+        <ul class="sp-list" id="sp-list" aria-label="Blocked hosts"></ul>
+        <p class="sp-hint" id="sp-hint">If the page breaks, switch the shield off for this site.</p>
+      </div>
+      <div class="sp-foot">
+        <div class="sp-row"><span>Shield on every site</span><button class="switch" id="sp-global" role="switch" aria-checked="true" aria-label="Shield on every site"></button></div>
+        <div class="sp-row muted"><span id="sp-total"></span><button class="link" id="sp-update">Update lists</button></div>
+        <button class="link sp-settings" id="sp-settings">Shield settings</button>
       </div>
     </div>
-
     <div id="menu" class="panel drop pop" role="menu" aria-label="Menu" hidden></div>
 
     <div id="palette" class="panel" role="dialog" aria-label="Command palette" hidden>
       <div class="pal-input">
         <span class="pal-ic"></span>
-        <input id="pal-q" type="text" spellcheck="false" autocomplete="off" placeholder="Type a command, tab or page" aria-label="Command">
-        <kbd>Esc</kbd>
+        <input id="pal-q" type="text" spellcheck="false" autocomplete="off" placeholder="Search tabs, history and commands" aria-label="Command">
       </div>
       <div id="pal-list" role="listbox"></div>
-      <div class="pal-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>Enter</kbd> run</span><span><kbd>Ctrl K</kbd> toggle</span></div>
     </div>
 
     <div id="toasts" aria-live="polite"></div>

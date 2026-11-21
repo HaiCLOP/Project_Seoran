@@ -22,7 +22,7 @@ pub struct Settings {
     pub shields_enabled: bool,
     pub allowed_sites: Vec<String>,
     pub theme: String,
-    /// The shell's plastic colour: grape, tangerine, lime, bondi, strawberry, graphite.
+    /// The accent colour: blue, orange, green, teal, pink or graphite.
     pub plastic: String,
     pub restore_session: bool,
     pub sleep_tabs_after_min: u64,
@@ -36,7 +36,7 @@ impl Default for Settings {
             shields_enabled: true,
             allowed_sites: Vec::new(),
             theme: "system".into(),
-            plastic: "grape".into(),
+            plastic: "blue".into(),
             restore_session: true,
             sleep_tabs_after_min: 20,
             blocked_total: 0,
@@ -44,7 +44,7 @@ impl Default for Settings {
     }
 }
 
-pub const PLASTICS: &[&str] = &["grape", "tangerine", "lime", "bondi", "strawberry", "graphite"];
+pub const PLASTICS: &[&str] = &["blue", "orange", "green", "teal", "pink", "graphite"];
 
 pub const SEARCH_ENGINES: &[(&str, &str, &str)] = &[
     ("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q="),
@@ -81,6 +81,9 @@ pub fn encode_query(q: &str) -> String {
 pub struct HistoryEntry {
     pub url: String,
     pub title: String,
+    /// The site's own icon, remembered for the new tab page.
+    #[serde(default)]
+    pub favicon: String,
     pub visits: u32,
     pub last: u64,
 }
@@ -134,13 +137,37 @@ impl Store {
     pub fn open(dir: PathBuf) -> Self {
         let _ = fs::create_dir_all(&dir);
         let history: Vec<HistoryEntry> = read_json(&dir.join("history.json"));
-        Self {
-            settings: read_json(&dir.join("settings.json")),
-            history: history.into_iter().map(|h| (h.url.clone(), h)).collect(),
-            bookmarks: read_json(&dir.join("bookmarks.json")),
-            history_dirty: false,
-            dir,
+        let mut settings: Settings = read_json(&dir.join("settings.json"));
+        // Colour names from earlier versions.
+        let renamed = match settings.plastic.as_str() {
+            "grape" => Some("blue"),
+            "tangerine" => Some("orange"),
+            "lime" => Some("green"),
+            "bondi" => Some("teal"),
+            "strawberry" => Some("pink"),
+            p if !PLASTICS.contains(&p) => Some("blue"),
+            _ => None,
+        };
+        if let Some(p) = renamed {
+            settings.plastic = p.into();
         }
+        let before = history.len();
+        // Internal pages never belong in history (older builds recorded some).
+        let history: HashMap<String, HistoryEntry> = history
+            .into_iter()
+            .filter(|h| h.url.starts_with("https://") || (h.url.starts_with("http://") && !Self::is_internal(&h.url)))
+            .map(|h| (h.url.clone(), h))
+            .collect();
+        let store = Self { history_dirty: history.len() != before, settings, history, bookmarks: read_json(&dir.join("bookmarks.json")), dir };
+        if renamed.is_some() {
+            store.save_settings();
+        }
+        store
+    }
+
+    /// Seoran's own pages, including the scheme used before the rename.
+    fn is_internal(url: &str) -> bool {
+        url.starts_with("http://seoran.") || url.starts_with(concat!("http://k", "ite."))
     }
 
     pub fn dir(&self) -> &Path {
@@ -178,6 +205,7 @@ impl Store {
         let entry = self.history.entry(url.to_owned()).or_insert_with(|| HistoryEntry {
             url: url.to_owned(),
             title: String::new(),
+            favicon: String::new(),
             visits: 0,
             last: 0,
         });
@@ -195,6 +223,15 @@ impl Store {
                 e.title = title.to_owned();
                 self.history_dirty = true;
             }
+    }
+
+    pub fn set_favicon(&mut self, url: &str, favicon: &str) {
+        if let Some(e) = self.history.get_mut(url) {
+            if e.favicon != favicon && favicon.starts_with("https://") {
+                e.favicon = favicon.to_owned();
+                self.history_dirty = true;
+            }
+        }
     }
 
     pub fn clear_history(&mut self) {
@@ -225,6 +262,7 @@ impl Store {
         list.sort_by(|a, b| b.visits.cmp(&a.visits).then(b.last.cmp(&a.last)));
         let mut seen = std::collections::HashSet::new();
         list.into_iter()
+            .filter(|h| !Self::is_internal(&h.url))
             .filter(|h| shield::site_of(&h.url).is_some_and(|s| seen.insert(s)))
             .take(n)
             .collect()
